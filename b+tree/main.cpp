@@ -21,7 +21,13 @@ public:
     bool operator != (const Key &other) const { return strcmp(key, other.key); }
     bool operator <= (const Key &other) const { return strcmp(key, other.key) <= 0; }
     bool operator >= (const Key &other) const { return strcmp(key, other.key) >= 0; }
+    
 };
+
+std::ostream &operator <<(std::ostream &os, const Key &a) {
+    os << a.key;
+    return os;
+}
 
 char ch[65];
 

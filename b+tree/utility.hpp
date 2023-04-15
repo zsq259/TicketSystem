@@ -2,6 +2,7 @@
 #define SJTU_UTILITY_HPP
 
 #include <utility>
+#include <iostream>
 
 namespace sjtu {
 
@@ -29,8 +30,15 @@ public:
 		return first != other.first? first < other.first : second < other.second;
 	}
 	bool operator ==(const pair &other) const { return first == other.first && second == other.second; }
+	bool operator !=(const pair &other) const { return !((*this) == other); }
 	bool operator <=(const pair &other) const { return (*this) < other || (*this) == other; }
 };
+
+template<class T1, class T2>
+std::ostream &operator <<(std::ostream &os, const pair<T1, T2> &a) {
+	os << a.first << ' ' << a.second;
+	return os;
+}
 
 }
 

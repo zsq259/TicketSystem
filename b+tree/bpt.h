@@ -86,11 +86,10 @@ public:
         ca.iofile.write(reinterpret_cast<const char *>(&root), sizeof(int));
     }
     int newNode(node &a) {
-        int temp = sum * sizeof(a) + sizeof(int);
-        a.place = temp;
+        a.place = sum * sizeof(a) + sizeof(int);
         a.type = NODE;
         ++sum;
-        return temp;
+        return a.place;
     }
     int Search(const node &a, const value &val) {
         for (int i = 0; i < a.sum; ++i) if (val < a.keys[i]) return i;
@@ -101,20 +100,19 @@ public:
         for (int i = a.sum; i > o; --i) a.keys[i] = a.keys[i - 1];
         a.keys[o] = val;
         ++a.sum;
-        //std::cerr << "sssum=" << a.sum << '\n';
     }
     void insertChild(node &a, int o, int p) {
         for (int i = a.sum; i >= o; --i) a.ch[i + 1] = a.ch[i];
         a.ch[o] = p;  
     }
     void Split(node &a) {
-        node b, c; 
+        node b, c, d; 
         if (a.place == root) {
-            //dstd::cerr << "osajdoaj\n";
             root = newNode(b);
             a.fa = root;
             b.ch[0] = a.place;
             b.sum = 0;
+            //ca.writeNode(a);
         }
         else ca.readNode(a.fa, b);
         newNode(c);
@@ -125,15 +123,18 @@ public:
         for (int i = 0; i < c.sum; ++i) c.keys[i] = a.keys[a.sum + i];
         if (a.type == NODE) {
             for (int i = 0; i <= c.sum; ++i) c.ch[i] = a.ch[a.sum + i], a.ch[a.sum + i] = 0;
+            for (int i = 0; i <= c.sum; ++i) {
+                if (!c.ch[i]) continue;
+                ca.readNode(c.ch[i], d);
+                d.fa = c.place;
+                ca.writeNode(d);
+            }
         }
         int o = Search(b, c.keys[0]);
-        //std::cerr << "o=" << o << '\n';
         b.ch[o] = c.place;
-        //std::cerr << "Sum=" << b.sum << '\n';
         if (a.type == NODE) insert(b, a.keys[a.sum - 1]), --a.sum;
         else insert(b, c.keys[0]);
         insertChild(b, o, a.place);
-        //if (b.ch[0] == a.place && b.ch[1] == c.place) std::cerr << "opsops\n";
         ca.writeNode(a); ca.writeNode(b); ca.writeNode(c);
         if (b.sum == maxSize) Split(b);
     }
@@ -150,19 +151,19 @@ public:
             ca.writeNode(a);
             return ;
         }
-        int head = root;
-        node a;
+        int head = root, o = 0;
+        node a, b;
         while (head) {
             //std::cerr << "head=" << head << '\n';
             ca.readNode(head, a);
             if (a.type == LEAF) {
                 insert(a, val);
                 if (a.sum == maxSize) Split(a);
-                ca.writeNode(a);
+                else ca.writeNode(a);
                 break;
             }
             else {
-                int o = Search(a, val);
+                o = Search(a, val);
                 head = a.ch[o];
             } 
         }
@@ -175,18 +176,12 @@ public:
         while(head) {
             ca.readNode(head, a);
             if (a.type == LEAF) {
-                //std::cerr << "sum=" << a.sum << '\n';
                 for (int i = 0; i < a.sum; ++i) {
                     if (a.keys[i].first == key) array.push_back(a.keys[i].second);
-                    else if (a.keys[i].first > key) return ;
                 }
                 head = a.next;
             }
-            else {
-                int o = a.sum;
-                for (int i = 0; i < a.sum; ++i) if (key <= a.keys[i].first) { o = i; break; }
-                head = a.ch[o];
-            }
+            else head = a.ch[0];
         }
         return ;
     }
