@@ -7,106 +7,11 @@
 #include <cstring>
 #include "utility.hpp"
 #include "vector.hpp"
+#include "LinkedHashMap.hpp"
 using std::fstream;
 using std::istream;
 using std::ostream;
 using sjtu::vector;
-
-template<class T>
-class LinkedHashMap {
-private:
-    const static int N = 228;
-    const static int maxSize = 114;
-    struct node {
-        node* next = nullptr;
-        node* timePre = nullptr, *timeNxt = nullptr;
-        int key;
-        T value;
-        node() = default;
-        node(int key_, const T &value_):key(key_), value(value_) {}
-        node &operator =(const node &other) {
-            if (&other == this) return *this;
-            next = other.next;
-            timePre = other.timePre; timeNxt = other.timeNxt;
-            key = other.key;
-            value = other.value;
-        }
-    };
-    int size = 0;
-    node beg;
-    node* head[N + 1], *cur = &beg;
-    
-public:
-    inline void insertTime(node* p) {
-        cur->timeNxt = p;
-        p->timePre = cur;
-        cur = p;
-    }
-    inline void removeTime(node* p) {
-        if (p->timePre) p->timePre->timeNxt = p->timeNxt;
-        if (p->timeNxt) p->timeNxt->timePre = p->timePre;
-        p->timePre = p->timeNxt = nullptr;
-    }
-    inline void updateTime(node* p) {
-        removeTime(p); insertTime(p);
-    }
-    bool find(int key, T &a) {
-        int o = key % N;
-        node* p = head[o];
-        //std::cerr << "key= " << key << '\n';
-        while (p) {
-            if (p->key == key) { a = p->value; updateTime(p); return true; }
-            p = p->next;
-        }
-        return false;
-    }
-    void insert(int key, const T &a) {
-        //std::cerr << "begin insert\n";
-        int o = key % N;
-        node *p = head[o], *q = nullptr;
-        if (!p) {
-            p = head[o] = new node(key, a);
-            insertTime(p); ++size;
-            //std::cerr << "end insert\n";
-            return ;
-        }
-        while (p) {
-            if (p->key == key) { p->value = a; updateTime(p); return ; }
-            q = p; p = p->next;
-        }
-        p = new node(key, a);
-        q->next = p;
-        insertTime(p); ++size;
-        //std::cerr << "end insert\n";
-    }
-    void remove(node* p) {
-        node* q = head[p->key % N];
-        if (q == p) head[p->key % N] = p->next;
-        else {
-            while (q->next != p) q = q->next;
-            q->next = p->next;
-        }
-        removeTime(p);
-    }
-    bool check (T &a) {
-        //std::cerr << "opospsaoda\n";
-        if (size < maxSize) return false;
-        a = beg.next->value;
-        remove(beg.next); delete(beg.next);
-        --size;
-        return true;
-    }
-    LinkedHashMap() {
-        for (int i = 0; i < N; ++i) head[i] = nullptr;
-    }
-    ~LinkedHashMap() {
-        node* p = &beg;
-        while (p->timeNxt) {
-            removeTime(p->timeNxt);
-            delete p->timeNxt;
-        }
-    }
-};
 
 template<class Key, class T>
 class BPlusTree {
@@ -114,25 +19,25 @@ private:
     using value = sjtu::pair<Key, T>; 
     #define NODE true
     #define LEAF false
-    const static int M = 228;
+    const static int M = 258;
     const static int maxSize = M;
     const static int minSize = M >> 1;
     class node {
     private:
-        int sum = 0, place = 0, fa = 0, next = 0;
+        int sum = 0, place = 0, next = 0;
         bool type;
         value keys[M + 1];
         int ch[M + 1] = {};
         friend class BPlusTree;
     public:
         node() = default;
-        node(const node &other):sum(other.sum), place(other.place), fa(other.fa), next(other.next), type(other.type) {
+        node(const node &other):sum(other.sum), place(other.place), next(other.next), type(other.type) {
             for (int i = 0; i < other.sum; ++i) keys[i] = other.keys[i];
             for (int i = 0; i <= other.sum; ++i) ch[i] = other.ch[i];
         }
         node &operator =(const node &other) {
             if (&other == this) return *this;
-            sum = other.sum; place = other.place; fa = other.fa; next = other.next;
+            sum = other.sum; place = other.place; next = other.next;
             type = other.type;
             for (int i = 0; i < other.sum; ++i) keys[i] = other.keys[i];
             for (int i = 0; i <= other.sum; ++i) ch[i] = other.ch[i];
@@ -157,6 +62,7 @@ private:
         LinkedHashMap<node> m;
         mystream iofile;
         friend class BPlusTree;
+        int c1 = 0, c2 = 0, c3 = 0, c4 = 0;
     public:
         void init(const char FileName_[], int &sum, int &root) {
             iofile.open(FileName_, fstream::in);
@@ -181,23 +87,36 @@ private:
             }
         }
         void getNode(int x, node &a) { 
-            
+            #ifdef USE_CACHE
             if (!m.find(x, a)) {
-                iofile.readNode(x, a);
+                iofile.readNode(x, a), ++c1;
                 m.insert(x, a);
                 node b;
-                if (m.check(b)) iofile << b;
+                if (m.check(b)) iofile << b, ++c2;
+                else ++c4;
             }
-            
-            //iofile.readNode(x, a);
+            else ++c3;
+            #else
+            iofile.readNode(x, a);
+            ++c1;
+            #endif
         }
         void putNode(const node &a) {
-            
+            #ifdef USE_CACHE
             m.insert(a.place, a);
             node b;
-            if (m.check(b)) iofile << b;
-            
-            //iofile << a;
+            if (m.check(b)) iofile << b, ++c2;
+            else ++c4;
+            #else
+            iofile << a;
+            ++c2;
+            #endif
+        }
+        ~cache() {
+            std::cerr << "c1=" << c1 << '\n';
+            std::cerr << "c2=" << c2 << '\n';
+            std::cerr << "c3=" << c3 << '\n';
+            std::cerr << "c4=" << c4 << '\n';
         }
     };
     int root;
@@ -231,29 +150,30 @@ public:
         for (int i = a.sum; i >= o; --i) a.ch[i + 1] = a.ch[i];
         a.ch[o] = p;  
     }
+    void findFa(const node &a, node &b) {
+        int head = root, o = 0;
+        while (head) {
+            ca.getNode(head, b);
+            o = Search(b, a.keys[a.sum - 1]);
+            head = b.ch[o];
+            if (head == a.place) return ;
+        }
+    }
     void Split(node &a) {
         node b, c, d; 
         if (a.place == root) {
             root = newNode(b);
-            a.fa = root;
             b.ch[0] = a.place;
             b.sum = 0;
         }
-        else ca.getNode(a.fa, b);
+        else findFa(a, b);
         newNode(c);
-        c.fa = a.fa; 
         c.next = a.next; a.next = c.place;
         c.type = a.type;
         c.sum = a.sum >> 1; a.sum -= c.sum;
         for (int i = 0; i < c.sum; ++i) c.keys[i] = a.keys[a.sum + i];
         if (a.type == NODE) {
             for (int i = 0; i <= c.sum; ++i) c.ch[i] = a.ch[a.sum + i], a.ch[a.sum + i] = 0;
-            for (int i = 0; i <= c.sum; ++i) {
-                if (!c.ch[i]) continue;
-                ca.getNode(c.ch[i], d);
-                d.fa = c.place;
-                ca.putNode(d);
-            }
         }
         int o = Search(b, c.keys[0]);
         b.ch[o] = c.place;
@@ -264,7 +184,6 @@ public:
         if (b.sum == maxSize) Split(b);
     }
     void Insert(const Key &key, const T &v) {
-        //std::cerr << "root=" << root << '\n';
         value val = value(key, v);
         if (!root) {
             node a;
@@ -279,7 +198,6 @@ public:
         int head = root, o = 0;
         node a, b;
         while (head) {
-            //std::cerr << "head=" << head << '\n';
             ca.getNode(head, a);
             if (a.type == LEAF) {
                 insert(a, val);
@@ -288,7 +206,7 @@ public:
                 break;
             }
             else {
-                int o = Search(a, val);
+                o = Search(a, val);
                 head = a.ch[o];
             } 
         }
@@ -303,6 +221,7 @@ public:
             if (a.type == LEAF) {
                 for (int i = 0; i < a.sum; ++i) {
                     if (a.keys[i].first == key) array.push_back(a.keys[i].second);
+                    else if (a.keys[i].first > key) return ;
                 }
                 head = a.next;
             }
@@ -310,7 +229,6 @@ public:
                 int o = a.sum;
                 for (int i = 0; i < a.sum; ++i) if (key <= a.keys[i].first) { o = i; break; }
                 head = a.ch[o];
-                head = a.ch[0];
             }
         }
         return ;
