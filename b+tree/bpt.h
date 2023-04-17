@@ -145,9 +145,9 @@ public:
         return a.place;
     }
     int Search(const node &a, const value &val) {
-        //for (int i = 0; i < a.sum; ++i) if (val < a.keys[i]) return i;
-        //return a.sum;
-        
+        for (int i = 0; i < a.sum; ++i) if (val < a.keys[i]) return i;
+        return a.sum;
+        /*
         int L = 0, R = a.sum - 1, o = a.sum;
         while (L <= R) {
             int mid = (L + R) >> 1;
@@ -155,7 +155,7 @@ public:
             else L = mid + 1;
         }
         return o;
-        
+        */
     }
     void insert(node &a, const value &val) {
         int o = Search(a, val);
