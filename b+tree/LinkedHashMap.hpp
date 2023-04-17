@@ -6,14 +6,14 @@ class LinkedHashMap {
 private:
     const static int N = 1000000;
     const static int maxSize = 224;
-    struct node {
-        node* next = nullptr;
-        node* timePre = nullptr, *timeNxt = nullptr;
+    struct Node {
+        Node* next = nullptr;
+        Node* timePre = nullptr, *timeNxt = nullptr;
         int key;
         T value;
-        node() = default;
-        node(int key_, const T &value_):key(key_), value(value_) {}
-        node &operator =(const node &other) {
+        Node() = default;
+        Node(int key_, const T &value_):key(key_), value(value_) {}
+        Node &operator =(const Node &other) {
             if (&other == this) return *this;
             next = other.next;
             timePre = other.timePre; timeNxt = other.timeNxt;
@@ -21,28 +21,29 @@ private:
             value = other.value;
         }
     };
-    int size = 0, cnt = 0;
-    node beg;
-    node* head[N + 1], *cur = &beg;
+    int sz = 0, cnt = 0;
+    Node beg;
+    Node* head[N + 1], *cur = &beg;
+    friend class cache;
     
 public:
-    inline void insertTime(node* p) {
+    inline void insertTime(Node* p) {
         cur->timeNxt = p;
         p->timePre = cur;
         cur = p;
     }
-    inline void removeTime(node* p) {
+    inline void removeTime(Node* p) {
         if (p == cur) cur = p->timePre;
         if (p->timePre) p->timePre->timeNxt = p->timeNxt;
         if (p->timeNxt) p->timeNxt->timePre = p->timePre;
         p->timePre = p->timeNxt = nullptr;
     }
-    inline void updateTime(node* p) {
+    inline void updateTime(Node* p) {
         removeTime(p); insertTime(p);
     }
     bool find(int key, T &a) {
         int o = key % N;
-        node* p = head[o];
+        Node* p = head[o];
         //std::cerr << "key= " << key << '\n';
         while (p) {
             if (p->key == key) { a = p->value; updateTime(p); return true; }
@@ -56,19 +57,19 @@ public:
         cnt = std::max(cnt, key);
         #endif
         int o = key % N;
-        node *p = head[o];
+        Node *p = head[o];
         while (p) {
             if (p->key == key) { p->value = a; updateTime(p); return ; }
             p = p->next;
         }
-        p = new node(key, a);
+        p = new Node(key, a);
         p->next = head[o];
         head[o] = p;
-        insertTime(p); ++size;
+        insertTime(p); ++sz;
         //std::cerr << "end insert\n";
     }
-    void remove(node* p) {
-        node* q = head[p->key % N];
+    void remove(Node* p) {
+        Node* q = head[p->key % N];
         if (q == p) head[p->key % N] = p->next;
         else {
             while (q->next != p) q = q->next;
@@ -78,11 +79,21 @@ public:
     }
     bool check (T &a) {
         //std::cerr << "opospsaoda\n";
-        if (size < maxSize) return false;
-        node* temp = beg.timeNxt;
+        if (sz < maxSize) return false;
+        Node* temp = beg.timeNxt;
         a = temp->value;
         remove(temp); delete temp;
-        --size;
+        --sz;
+        return true;
+    }
+    int size() { return sz; }
+    bool timePop(T &a) {
+        if (!sz) return false;
+        Node *temp = beg.timeNxt;
+        a = temp->value;
+        beg.timeNxt = temp->timeNxt;
+        delete temp;
+        --sz;
         return true;
     }
     LinkedHashMap() {
@@ -93,8 +104,8 @@ public:
         #ifdef PRINT_CNT
         std::cerr << "cnt=" << cnt << '\n';
         #endif
-        node *p = beg.timeNxt;
-        node *temp;
+        Node *p = beg.timeNxt;
+        Node *temp;
         while (p) {
             temp = p;
             p = p->timeNxt;

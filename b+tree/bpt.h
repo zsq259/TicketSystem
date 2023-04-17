@@ -124,6 +124,8 @@ private:
             std::cerr << "c3=" << c3 << '\n';
             std::cerr << "c4=" << c4 << '\n';
             #endif
+            node b;
+            while (m.timePop(b)) iofile << b;
         }
     };
     int root, sum = 0;
