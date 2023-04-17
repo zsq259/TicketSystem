@@ -1,7 +1,7 @@
 #ifndef TICKET_SYSTEM_B_PLUS_TREE_H
 #define TICKET_SYSTEM_B_PLUS_TREE_H
 
-//#define USE_CACHE
+#define USE_CACHE
 //#define PRINT_CNT
 #include <iostream>
 #include <fstream>
@@ -143,8 +143,17 @@ public:
         return a.place;
     }
     int Search(const node &a, const value &val) {
-        for (int i = 0; i < a.sum; ++i) if (val < a.keys[i]) return i;
-        return a.sum;
+        //for (int i = 0; i < a.sum; ++i) if (val < a.keys[i]) return i;
+        //return a.sum;
+        
+        int L = 0, R = a.sum - 1, o = a.sum;
+        while (L <= R) {
+            int mid = (L + R) >> 1;
+            if (val < a.keys[mid]) o = mid, R = mid - 1;
+            else L = mid + 1;
+        }
+        return o;
+        
     }
     void insert(node &a, const value &val) {
         int o = Search(a, val);
