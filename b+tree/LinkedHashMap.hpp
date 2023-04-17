@@ -5,7 +5,7 @@ template<class T>
 class LinkedHashMap {
 private:
     const static int N = 1000000;
-    const static int maxSize = 4024;
+    const static int maxSize = 2024;
     struct Node {
         Node* next = nullptr;
         Node* timePre = nullptr, *timeNxt = nullptr;

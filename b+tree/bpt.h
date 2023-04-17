@@ -112,6 +112,7 @@ private:
     };
     int root, sum = 0;
     cache ca;
+    vector<int> space;
 public:
     explicit BPlusTree(const char FileName_[]){
         ca.init(FileName_, sum, root);
@@ -121,9 +122,9 @@ public:
         ca.iofile.write(reinterpret_cast<const char *>(&root), sizeof(int));
     }
     int newNode(node &a) {
-        a.place = sum * sizeof(a) + sizeof(int);
+        if (space.size()) a.place = space.back(), space.pop_back();
+        else a.place = sum * sizeof(a) + sizeof(int), ++sum;
         a.type = NODE;
-        ++sum;
         return a.place;
     }
     int Search(const node &a, const value &val) {
@@ -227,6 +228,9 @@ public:
             if (a.type == NODE) for (int i = 0; i <= c.sum; ++i) a.ch[a.sum + i] = c.ch[i];
             a.next = c.next; a.sum += c.sum;
             ca.putNode(a); ca.putNode(b);
+
+            space.push_back(c.place);
+            
             if (a.sum > maxSize) Split(a);
             return ;
         }
@@ -259,7 +263,7 @@ public:
         node b, c;
         if (a.place == root) return ;
         findFa(a, b);
-        if (b.place == root && b.sum == 1 && !b.ch[1]) { root = a.place; return ;}
+        if (b.place == root && b.sum == 1 && !b.ch[1]) { space.push_back(root); root = a.place; return ;}
         int o = Search(b, a.keys[a.sum - 1]), size = 0;
         int flag = -1;
         if (o) ca.getNode(b.ch[o - 1], c), size = c.sum, flag = 0;
