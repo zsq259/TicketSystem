@@ -4,7 +4,7 @@
 template<class T>
 class LinkedHashMap {
 private:
-    const static int N = 259;
+    const static int N = 1000000;
     const static int maxSize = 224;
     struct node {
         node* next = nullptr;
@@ -21,7 +21,7 @@ private:
             value = other.value;
         }
     };
-    int size = 0;
+    int size = 0, cnt = 0;
     node beg;
     node* head[N + 1], *cur = &beg;
     
@@ -52,6 +52,9 @@ public:
     }
     void insert(int key, const T &a) {
         //std::cerr << "begin insert\n";
+        #ifdef PRINT_CNT
+        cnt = std::max(cnt, key);
+        #endif
         int o = key % N;
         node *p = head[o];
         while (p) {
@@ -87,6 +90,9 @@ public:
         for (int i = 0; i < N; ++i) head[i] = nullptr;
     }
     ~LinkedHashMap() {
+        #ifdef PRINT_CNT
+        std::cerr << "cnt=" << cnt << '\n';
+        #endif
         node *p = beg.timeNxt;
         node *temp;
         while (p) {

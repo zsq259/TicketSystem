@@ -1,6 +1,8 @@
 #ifndef TICKET_SYSTEM_B_PLUS_TREE_H
 #define TICKET_SYSTEM_B_PLUS_TREE_H
 
+//#define USE_CACHE
+//#define PRINT_CNT
 #include <iostream>
 #include <fstream>
 #include <cstdio>
@@ -19,15 +21,15 @@ private:
     using value = sjtu::pair<Key, T>; 
     #define NODE true
     #define LEAF false
-    const static int M = 259;
+    const static int M = 159;
     const static int maxSize = M;
     const static int minSize = M >> 1;
     class node {
     private:
         int sum = 0, place = 0, next = 0;
         bool type;
-        value keys[(M + 2) << 1];
-        int ch[(M + 2) << 1] = {};
+        value keys[M + 2];
+        int ch[M + 2] = {};
         friend class BPlusTree;
     public:
         node() = default;
@@ -184,14 +186,6 @@ public:
         if (a.type == NODE) insert(b, a.keys[a.sum - 1]), --a.sum;
         else insert(b, c.keys[0]);
         insertChild(b, o, a.place);
-        
-        /*
-        std::cout << "o=" << o << '\n';
-        //std::cout << a.place << ' ' << c.place << ' ' << b.ch[0] << ' ' << b.ch[2] << '\n';
-        std::cout << "place=" << b.place << '\n'; 
-        b.printKeys();
-        */
-
         ca.putNode(a); ca.putNode(b); ca.putNode(c);
         if (b.sum > maxSize) Split(b);
     }
@@ -231,32 +225,42 @@ public:
         a.ch[a.sum] = 0;
     }
     void Merge(node &b, node &a, node &c) {
-
-        //std::cerr << "-----------------------------------------\n";
-        //if (a.sum + c.sum < maxSize) {
+        if (a.sum + c.sum < maxSize) {
             int o = Search(b, a.keys[a.sum - 1]);
-            //a.printKeys();
-            //c.printKeys();
             if (a.type == NODE) a.keys[a.sum] = b.keys[o], ++a.sum;
-            //if (b.ch[o] != a.place || b.ch[o + 1] != c.place) puts("---------------------------------");
             deleteChild(b, o + 1);
-
             Delete(b, o);
             for (int i = 0; i < c.sum; ++i) a.keys[a.sum + i] = c.keys[i];
             if (a.type == NODE) for (int i = 0; i <= c.sum; ++i) a.ch[a.sum + i] = c.ch[i];
             a.next = c.next; a.sum += c.sum;
-
-            /*
-            puts("oooooooooooooooo");
-            a.printKeys();
-            if (b.ch[o] != a.place) puts("sadjoaijfoiahfoij");
-            puts("oooooooooooooooooooo");
-            */
-
             ca.putNode(a); ca.putNode(b);
             if (a.sum > maxSize) Split(a);
-
-        //} 
+            return ;
+        }
+        int o = Search(b, a.keys[a.sum - 1]);
+        int sp = a.sum;
+        value keys[M << 1];
+        int ch[M << 1];
+        for (int i = 0; i < a.sum; ++i) keys[i] = a.keys[i];
+        if (a.type == NODE) keys[a.sum] = b.keys[o], ++sp;
+        for (int i = 0; i < c.sum; ++i) keys[sp + i] = c.keys[i];
+        sp += c.sum;
+        if (a.type == NODE) {
+            for (int i = 0; i <= a.sum; ++i) ch[i] = a.ch[i];
+            for (int i = 0; i <= c.sum; ++i) ch[a.sum + 1 + i] = c.ch[i];
+        }
+        Delete(b, o);
+        int p = sp >> 1, st = p + (a.type == NODE);
+        a.sum = p;
+        c.sum = sp - st;
+        for (int i = 0; i < a.sum; ++i) a.keys[i] = keys[i];
+        for (int i = 0; i < c.sum; ++i) c.keys[i] = keys[st + i];
+        insert(b, keys[p]);
+        if (a.type == NODE) {
+            for (int i = 0; i <= a.sum; ++i) a.ch[i] = ch[i];
+            for (int i = 0; i <= c.sum; ++i) c.ch[i] = ch[a.sum + 1 + i];
+        }
+        ca.putNode(a); ca.putNode(b); ca.putNode(c);
     }
     void Merge(node &a) {
         node b, c;
@@ -265,8 +269,6 @@ public:
         if (b.place == root && b.sum == 1 && !b.ch[1]) { root = a.place; return ;}
         int o = Search(b, a.keys[a.sum - 1]), size = 0;
         int flag = -1;
-        //std::cout << "o=" << o << '\n';
-        //b.printKeys();
         if (o) ca.getNode(b.ch[o - 1], c), size = c.sum, flag = 0;
         if (o < b.sum && b.ch[o + 1]) {
             ca.getNode(b.ch[o + 1], c); flag = 1;
@@ -275,34 +277,22 @@ public:
         if (flag == -1) { ca.putNode(a); return ; }
         else if (flag) Merge(b, a, c);
         else Merge(b, c, a);
-
-        //ca.putNode(a); ca.putNode(b); ca.putNode(c);
         ca.getNode(b.place, b);
         if (b.sum < minSize) Merge(b);
     }
     void Delete(const Key &key, const T &v) {
         if (!root) return ;
         value val = value(key, v);
-        //std::cerr << "                  val=" << val << '\n';
         node a;
         int head = root, o = 0;
         while (head) {
             ca.getNode(head, a);
             o = Search(a, val);
-            
-            /*
-            std::cerr << "head=" << head << '\n';
-            std::cerr << "o=" << o << '\n';
-                a.printKeys();
-            */
-
-
             if (a.type == LEAF) {
                 if (!o || a.keys[o - 1] != val) return ;
                 Delete(a, o - 1);
                 ca.putNode(a);
                 if (a.sum < minSize) Merge(a);
-                //else ca.putNode(a);
                 break;
             }
             else {
@@ -328,7 +318,6 @@ public:
                 int o = a.sum;
                 for (int i = 0; i < a.sum; ++i) if (key <= a.keys[i].first) { o = i; break; }
                 head = a.ch[o];
-                //head = a.ch[0];
             }
         }
         return ;
