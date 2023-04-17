@@ -92,38 +92,20 @@ private:
             }
         }
         void getNode(int x, node &a) { 
-            #ifdef USE_CACHE
             if (!m.find(x, a)) {
-                iofile.readNode(x, a), ++c1;
+                iofile.readNode(x, a);
                 m.insert(x, a);
                 node b;
-                if (m.check(b)) iofile << b, ++c2;
-                else ++c4;
+                if (m.check(b)) iofile << b;
             }
-            else ++c3;
-            #else
-            iofile.readNode(x, a);
-            ++c1;
-            #endif
         }
         void putNode(const node &a) {
-            #ifdef USE_CACHE
             m.insert(a.place, a);
             node b;
             if (m.check(b)) iofile << b, ++c2;
             else ++c4;
-            #else
-            iofile << a;
-            ++c2;
-            #endif
         }
         ~cache() {
-            #ifdef PRINT_CNT
-            std::cerr << "c1=" << c1 << '\n';
-            std::cerr << "c2=" << c2 << '\n';
-            std::cerr << "c3=" << c3 << '\n';
-            std::cerr << "c4=" << c4 << '\n';
-            #endif
             node b;
             while (m.timePop(b)) iofile << b;
         }
