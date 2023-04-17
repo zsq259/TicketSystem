@@ -1,6 +1,7 @@
 #ifndef TICKET_SYSTEM_LINKEDHASHMAP
 #define TICKET_SYSTEM_LINKEDHASHMAP
 
+namespace sjtu {
 template<class T>
 class LinkedHashMap {
 private:
@@ -113,5 +114,6 @@ public:
         }
     }
 };
+}
 
 #endif

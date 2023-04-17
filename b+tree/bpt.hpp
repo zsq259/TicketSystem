@@ -15,6 +15,7 @@ using std::istream;
 using std::ostream;
 using sjtu::vector;
 
+namespace sjtu {
 template<class Key, class T>
 class BPlusTree {
 private:
@@ -69,7 +70,7 @@ private:
         friend class BPlusTree;
         int c1 = 0, c2 = 0, c3 = 0, c4 = 0;
     public:
-        void init(const char FileName_[], int &sum, int &root) {
+        explicit cache(const char FileName_[], int &sum, int &root) {
             iofile.open(FileName_, fstream::in);
             bool flag = iofile.is_open();
             iofile.close();
@@ -114,9 +115,7 @@ private:
     cache ca;
     vector<int> space;
 public:
-    explicit BPlusTree(const char FileName_[]){
-        ca.init(FileName_, sum, root);
-    }
+    explicit BPlusTree(const char FileName_[]):ca(FileName_, sum, root) {}
     ~BPlusTree() {
         ca.iofile.seekp(0);
         ca.iofile.write(reinterpret_cast<const char *>(&root), sizeof(int));
@@ -130,6 +129,7 @@ public:
     int Search(const node &a, const value &val) {
         for (int i = 0; i < a.sum; ++i) if (val < a.keys[i]) return i;
         return a.sum;
+        
         /*
         int L = 0, R = a.sum - 1, o = a.sum;
         while (L <= R) {
@@ -230,7 +230,7 @@ public:
             ca.putNode(a); ca.putNode(b);
 
             space.push_back(c.place);
-            
+
             if (a.sum > maxSize) Split(a);
             return ;
         }
@@ -320,5 +320,6 @@ public:
         return ;
     }
 };
+}
 
 #endif

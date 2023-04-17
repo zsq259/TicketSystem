@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cstdio>
 #include <cstring>
-#include "bpt.h"
+#include "bpt.hpp"
 #include "vector.hpp"
 
 class Key{
@@ -33,7 +33,7 @@ char ch[65];
 
 int main() {
     int n, x, y;
-    BPlusTree<Key, int> BPT("data.db");
+    sjtu::BPlusTree<Key, int> BPT("data.db");
     sjtu::vector<int> v;
     std::string s;
     std::cin >> n;
