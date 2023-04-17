@@ -19,15 +19,15 @@ private:
     using value = sjtu::pair<Key, T>; 
     #define NODE true
     #define LEAF false
-    const static int M = 258;
+    const static int M = 259;
     const static int maxSize = M;
     const static int minSize = M >> 1;
     class node {
     private:
         int sum = 0, place = 0, next = 0;
         bool type;
-        value keys[M + 1];
-        int ch[M + 1] = {};
+        value keys[(M + 2) << 1];
+        int ch[(M + 2) << 1] = {};
         friend class BPlusTree;
     public:
         node() = default;
@@ -42,6 +42,9 @@ private:
             for (int i = 0; i < other.sum; ++i) keys[i] = other.keys[i];
             for (int i = 0; i <= other.sum; ++i) ch[i] = other.ch[i];
             return *this;
+        }
+        void printKeys() {
+            for (int i = 0; i < sum; ++i) std::cerr << "keys[" << i << "]= " << keys[i] << '\n';
         }
     };
     class mystream: public fstream{
@@ -113,15 +116,16 @@ private:
             #endif
         }
         ~cache() {
+            #ifdef PRINT_CNT
             std::cerr << "c1=" << c1 << '\n';
             std::cerr << "c2=" << c2 << '\n';
             std::cerr << "c3=" << c3 << '\n';
             std::cerr << "c4=" << c4 << '\n';
+            #endif
         }
     };
-    int root;
+    int root, sum = 0;
     cache ca;
-    int sum = 0;
 public:
     explicit BPlusTree(const char FileName_[]){
         ca.init(FileName_, sum, root);
@@ -160,7 +164,7 @@ public:
         }
     }
     void Split(node &a) {
-        node b, c, d; 
+        node b, c;
         if (a.place == root) {
             root = newNode(b);
             b.ch[0] = a.place;
@@ -180,13 +184,21 @@ public:
         if (a.type == NODE) insert(b, a.keys[a.sum - 1]), --a.sum;
         else insert(b, c.keys[0]);
         insertChild(b, o, a.place);
+        
+        /*
+        std::cout << "o=" << o << '\n';
+        //std::cout << a.place << ' ' << c.place << ' ' << b.ch[0] << ' ' << b.ch[2] << '\n';
+        std::cout << "place=" << b.place << '\n'; 
+        b.printKeys();
+        */
+
         ca.putNode(a); ca.putNode(b); ca.putNode(c);
-        if (b.sum == maxSize) Split(b);
+        if (b.sum > maxSize) Split(b);
     }
     void Insert(const Key &key, const T &v) {
+        node a;
         value val = value(key, v);
         if (!root) {
-            node a;
             root = newNode(a);
             a.place = root;
             a.type = LEAF;
@@ -196,12 +208,11 @@ public:
             return ;
         }
         int head = root, o = 0;
-        node a, b;
         while (head) {
             ca.getNode(head, a);
             if (a.type == LEAF) {
                 insert(a, val);
-                if (a.sum == maxSize) Split(a);
+                if (a.sum > maxSize) Split(a);
                 else ca.putNode(a);
                 break;
             }
@@ -211,11 +222,99 @@ public:
             } 
         }
     }
+    void Delete(node &a, int o) {
+        --a.sum;
+        for (int i = o; i < a.sum; ++i) a.keys[i] = a.keys[i + 1];
+    }
+    void deleteChild(node &a, int o) {
+        for (int i = o; i < a.sum; ++i) a.ch[i] = a.ch[i + 1];
+        a.ch[a.sum] = 0;
+    }
+    void Merge(node &b, node &a, node &c) {
+
+        //std::cerr << "-----------------------------------------\n";
+        //if (a.sum + c.sum < maxSize) {
+            int o = Search(b, a.keys[a.sum - 1]);
+            //a.printKeys();
+            //c.printKeys();
+            if (a.type == NODE) a.keys[a.sum] = b.keys[o], ++a.sum;
+            //if (b.ch[o] != a.place || b.ch[o + 1] != c.place) puts("---------------------------------");
+            deleteChild(b, o + 1);
+
+            Delete(b, o);
+            for (int i = 0; i < c.sum; ++i) a.keys[a.sum + i] = c.keys[i];
+            if (a.type == NODE) for (int i = 0; i <= c.sum; ++i) a.ch[a.sum + i] = c.ch[i];
+            a.next = c.next; a.sum += c.sum;
+
+            /*
+            puts("oooooooooooooooo");
+            a.printKeys();
+            if (b.ch[o] != a.place) puts("sadjoaijfoiahfoij");
+            puts("oooooooooooooooooooo");
+            */
+
+            ca.putNode(a); ca.putNode(b);
+            if (a.sum > maxSize) Split(a);
+
+        //} 
+    }
+    void Merge(node &a) {
+        node b, c;
+        if (a.place == root) return ;
+        findFa(a, b);
+        if (b.place == root && b.sum == 1 && !b.ch[1]) { root = a.place; return ;}
+        int o = Search(b, a.keys[a.sum - 1]), size = 0;
+        int flag = -1;
+        //std::cout << "o=" << o << '\n';
+        //b.printKeys();
+        if (o) ca.getNode(b.ch[o - 1], c), size = c.sum, flag = 0;
+        if (o < b.sum && b.ch[o + 1]) {
+            ca.getNode(b.ch[o + 1], c); flag = 1;
+            if (o && c.sum < size) ca.getNode(b.ch[o - 1], c), flag = 0;
+        }
+        if (flag == -1) { ca.putNode(a); return ; }
+        else if (flag) Merge(b, a, c);
+        else Merge(b, c, a);
+
+        //ca.putNode(a); ca.putNode(b); ca.putNode(c);
+        ca.getNode(b.place, b);
+        if (b.sum < minSize) Merge(b);
+    }
+    void Delete(const Key &key, const T &v) {
+        if (!root) return ;
+        value val = value(key, v);
+        //std::cerr << "                  val=" << val << '\n';
+        node a;
+        int head = root, o = 0;
+        while (head) {
+            ca.getNode(head, a);
+            o = Search(a, val);
+            
+            /*
+            std::cerr << "head=" << head << '\n';
+            std::cerr << "o=" << o << '\n';
+                a.printKeys();
+            */
+
+
+            if (a.type == LEAF) {
+                if (!o || a.keys[o - 1] != val) return ;
+                Delete(a, o - 1);
+                ca.putNode(a);
+                if (a.sum < minSize) Merge(a);
+                //else ca.putNode(a);
+                break;
+            }
+            else {
+                head = a.ch[o];
+            }
+        }
+    }
     void Find(const Key &key, vector<T> &array) {
+        node a;
         array.clear();
         int head = root;
         bool o = false;
-        node a;
         while(head) {
             ca.getNode(head, a);
             if (a.type == LEAF) {
@@ -229,6 +328,7 @@ public:
                 int o = a.sum;
                 for (int i = 0; i < a.sum; ++i) if (key <= a.keys[i].first) { o = i; break; }
                 head = a.ch[o];
+                //head = a.ch[0];
             }
         }
         return ;

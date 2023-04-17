@@ -44,6 +44,10 @@ int main() {
             std::cin >> ch >> y;
             BPT.Insert(Key(ch), y);
         }
+        else if (s == "delete") {
+            std::cin >> ch >> y;
+            BPT.Delete(Key(ch), y);
+        }
         else if (s == "find") {
             std::cin >> ch;
             BPT.Find(Key(ch), v);
