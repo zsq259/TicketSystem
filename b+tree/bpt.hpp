@@ -36,16 +36,14 @@ private:
         node() = default;
         node(const node &other):sum(other.sum), place(other.place), next(other.next), type(other.type) {
             for (int i = 0; i < other.sum; ++i) keys[i] = other.keys[i];
-            //if (other.type == NODE) 
-            for (int i = 0; i <= other.sum; ++i) ch[i] = other.ch[i];
+            if (other.type == NODE) for (int i = 0; i <= other.sum; ++i) ch[i] = other.ch[i];
         }
         node &operator =(const node &other) {
             if (&other == this) return *this;
             sum = other.sum; place = other.place; next = other.next;
             type = other.type;
             for (int i = 0; i < other.sum; ++i) keys[i] = other.keys[i];
-            //if (other.type == NODE) 
-            for (int i = 0; i <= other.sum; ++i) ch[i] = other.ch[i];
+            if (other.type == NODE) for (int i = 0; i <= other.sum; ++i) ch[i] = other.ch[i];
             return *this;
         }
         void printKeys() {
