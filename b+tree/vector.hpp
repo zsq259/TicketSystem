@@ -30,7 +30,7 @@ public:
 	 */
 	static const int startSize = 4;
 	T* head;
-	int sz, sum;
+	int sz = 0, sum = 0;
 	std::allocator<T> alloc;
 	class const_iterator;
 	class iterator 

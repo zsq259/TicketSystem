@@ -62,7 +62,7 @@ private:
         mystream &operator<<(const vector<U> &a) {
             seekp(0);
             size_t size = a.size();
-            int p = 0;
+            U p = 0;
             write(reinterpret_cast<const char *>(&size), sizeof(size));
             for (int i = 0; i < size; ++i) p = a[i], write(reinterpret_cast<const char *>(&p), sizeof(p));
             return *this;
@@ -75,9 +75,9 @@ private:
         void readVector(vector<U> &a) {
             seekg(0);
             size_t size = 0;
-            int p = 0;
+            U p = 0;
             read(reinterpret_cast<char *>(&size), sizeof(size));
-            while (size--) read(reinterpret_cast<char *>(&p), sizeof(p)), a.push_back(p);
+            while (size-- > 0) read(reinterpret_cast<char *>(&p), sizeof(p)), a.push_back(p);
         }
     };
     class cache {
@@ -88,7 +88,7 @@ private:
         friend class BPlusTree;
         int c1 = 0, c2 = 0, c3 = 0, c4 = 0;
     public:
-        explicit cache(const char FileName_[], const char BinName_[], int &sum, int &root, vector<int> &a) {
+        explicit cache(const char FileName_[], const char BinName_[], int &sum, int &root) {
             iofile.open(FileName_, fstream::in);
             bool flag = iofile.is_open();
             iofile.close();
@@ -109,18 +109,7 @@ private:
                 iofile.seekg(0, mystream::end);
                 sum = ((int)iofile.tellg() - sizeof(int)) / sizeof(node);
             }
-            bin.open(BinName_, fstream::in);
-            flag = bin.is_open();
-            bin.close();
-            if (!flag) {
-                bin.open(BinName_, fstream::out);
-                bin.close();
-            }
-            bin.open(BinName_, fstream::in | fstream::out | fstream::binary);
-            if (flag) {
-                bin.seekg(0);
-                bin.read(reinterpret_cast<char *>(&a), sizeof(a));
-            }
+            
         }
         void getNode(int x, node &a) { 
             if (!m.find(x, a)) {
@@ -145,14 +134,39 @@ private:
     cache ca;
     vector<int> space;
 public:
-    explicit BPlusTree(const char FileName_[], const char BinName_[]):ca(FileName_, BinName_, sum, root, space) {}
+    explicit BPlusTree(const char FileName_[], const char BinName_[]):space(), ca(FileName_, BinName_, sum, root) {
+        
+        /*
+        std::cerr << "sssum=" << space.sum << '\n';
+        std::cerr << "size=" << space.size() << '\n';
+        */
+        
+        ca.bin.open(BinName_, fstream::in);
+        bool flag = ca.bin.is_open();
+        ca.bin.close();
+        if (!flag) {
+            ca.bin.open(BinName_, fstream::out);
+            ca.bin.close();
+        }
+        ca.bin.open(BinName_, fstream::in | fstream::out | fstream::binary);
+
+        space.sum = space.sz = 0;
+        //std::cerr << "sum=" << space.sum << '\n';
+        
+        
+        if (flag) ca.bin.readVector(space); 
+
+        }
     ~BPlusTree() {
         //std::cerr << "size=" << M << '\n';
+        //std::cerr << "~size=" << space.size() << '\n';
+        
         ca.iofile.seekp(0);
         ca.iofile.write(reinterpret_cast<const char *>(&root), sizeof(int));
         ca.bin << space;
     }
     int newNode(node &a) {
+        //std::cerr << "size=" << space.size() << '\n';
         if (space.size()) a.place = space.back(), space.pop_back();
         else a.place = sum * sizeof(a) + sizeof(int), ++sum;
         a.type = NODE;
