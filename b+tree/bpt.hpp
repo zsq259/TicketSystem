@@ -206,42 +206,7 @@ public:
         else insert(b, c.keys[0]);
         insertChild(b, o, a.place);
         ca.putNode(a); ca.putNode(b); ca.putNode(c);
-        if (b.sum > maxSize) Split(b);
-    }
-    void Insert(const Key &key, const T &v) {
-        node a;
-        value val = value(key, v);
-        if (!root) {
-            root = newNode(a);
-            a.place = root;
-            a.type = LEAF;
-            a.keys[0] = val;
-            a.sum = 1;
-            ca.putNode(a);
-            return ;
-        }
-        int head = root, o = 0;
-        while (head) {
-            ca.getNode(head, a);
-            if (a.type == LEAF) {
-                insert(a, val);
-                if (a.sum > maxSize) Split(a);
-                else ca.putNode(a);
-                break;
-            }
-            else {
-                o = Search(a, val);
-                head = a.ch[o];
-            } 
-        }
-    }
-    void Delete(node &a, int o) {
-        --a.sum;
-        for (int i = o; i < a.sum; ++i) a.keys[i] = a.keys[i + 1];
-    }
-    void deleteChild(node &a, int o) {
-        for (int i = o; i < a.sum; ++i) a.ch[i] = a.ch[i + 1];
-        a.ch[a.sum] = 0;
+        if (b.sum > maxSize) Maintain(b, 1);
     }
     void Merge(node &b, node &a, node &c) {
         if (a.sum + c.sum < maxSize) {
@@ -257,6 +222,11 @@ public:
             space.push_back(c.place);
 
             if (a.sum > maxSize) Split(a);
+            return ;
+        }
+        if (a.sum + c.sum > maxSize + minSize + (minSize >> 1)) {
+            if (a.sum > maxSize) Split(a);
+            if (c.sum > maxSize) Split(c);
             return ;
         }
         int o = Search(b, a.keys[a.sum - 1]);
@@ -284,23 +254,67 @@ public:
         }
         ca.putNode(a); ca.putNode(b); ca.putNode(c);
     }
-    void Merge(node &a) {
+    void Delete(node &a, int o) {
+        --a.sum;
+        for (int i = o; i < a.sum; ++i) a.keys[i] = a.keys[i + 1];
+    }
+    void deleteChild(node &a, int o) {
+        for (int i = o; i < a.sum; ++i) a.ch[i] = a.ch[i + 1];
+        a.ch[a.sum] = 0;
+    }
+    void Maintain(node &a, int op) {
         node b, c;
-        if (a.place == root) return ;
-        findFa(a, b);
-        if (b.place == root && b.sum == 1 && !b.ch[1]) { space.push_back(root); root = a.place; return ;}
+        if (op) {
+            if (a.place == root) { Split(a); return ; }
+        }
+        else {
+            if (a.place == root) return ;
+            findFa(a, b);
+            if (b.place == root && b.sum == 1 && !b.ch[1]) { space.push_back(root); root = a.place; return ;}
+        }
         int o = Search(b, a.keys[a.sum - 1]), size = 0;
         int flag = -1;
         if (o) ca.getNode(b.ch[o - 1], c), size = c.sum, flag = 0;
         if (o < b.sum && b.ch[o + 1]) {
             ca.getNode(b.ch[o + 1], c); flag = 1;
-            if (o && c.sum < size) ca.getNode(b.ch[o - 1], c), flag = 0;
+            if (o && op? (c.sum > size) : (c.sum < size)) ca.getNode(b.ch[o - 1], c), flag = 0;
         }
-        if (flag == -1) { ca.putNode(a); return ; }
+        if (flag == -1) { 
+            if (op) Split(a); 
+            else ca.putNode(a); 
+            return ; 
+        }
         else if (flag) Merge(b, a, c);
         else Merge(b, c, a);
         ca.getNode(b.place, b);
-        if (b.sum < minSize) Merge(b);
+        if (b.sum < minSize || b.sum > maxSize) Maintain(b, op);
+    }
+    void Insert(const Key &key, const T &v) {
+        node a;
+        value val = value(key, v);
+        if (!root) {
+            root = newNode(a);
+            a.place = root;
+            a.type = LEAF;
+            a.keys[0] = val;
+            a.sum = 1;
+            ca.putNode(a);
+            return ;
+        }
+        int head = root, o = 0;
+        while (head) {
+            ca.getNode(head, a);
+            if (a.type == LEAF) {
+                insert(a, val);
+                if (a.sum > maxSize) Maintain(a, 1);
+                else ca.putNode(a);
+                break;
+            }
+            else {
+                o = Search(a, val);
+                head = a.ch[o];
+            } 
+        }
     }
     void Delete(const Key &key, const T &v) {
         if (!root) return ;
@@ -314,7 +328,7 @@ public:
                 if (!o || a.keys[o - 1] != val) return ;
                 Delete(a, o - 1);
                 ca.putNode(a);
-                if (a.sum < minSize) Merge(a);
+                if (a.sum < minSize) Maintain(a, 0);
                 break;
             }
             else {
