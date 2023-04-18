@@ -2,6 +2,7 @@
 #define TICKET_SYSTEM_B_PLUS_TREE_H
 
 #define USE_CACHE
+#define USE_SWAP
 //#define PRINT_CNT
 #include <iostream>
 #include <fstream>
@@ -234,9 +235,21 @@ public:
         int sp = a.sum;
         value keys[M << 1];
         int ch[M << 1];
+        
+        #ifdef USE_SWAP
         for (int i = 0; i < a.sum; ++i) std::swap(keys[i], a.keys[i]);
+        #else
+        for (int i = 0; i < a.sum; ++i) keys[i] = a.keys[i];
+        #endif
+
         if (a.type == NODE) keys[a.sum] = b.keys[o], ++sp;
+        
+        #ifdef USE_SWAP
         for (int i = 0; i < c.sum; ++i) std::swap(keys[sp + i], c.keys[i]);
+        #else
+        for (int i = 0; i < c.sum; ++i) keys[sp + i] = c.keys[i];
+        #endif
+        
         sp += c.sum;
         if (a.type == NODE) {
             for (int i = 0; i <= a.sum; ++i) ch[i] = a.ch[i];
@@ -246,8 +259,15 @@ public:
         int p = sp >> 1, st = p + (a.type == NODE);
         a.sum = p;
         c.sum = sp - st;
+        
+        #ifdef USE_SWAP
         for (int i = 0; i < a.sum; ++i) std::swap(a.keys[i], keys[i]);
-        for (int i = 0; i < c.sum; ++i) std::swap(c.keys[i], keys[st + i]);
+        #else
+        for (int i = 0; i < a.sum; ++i) a.keys[i] = keys[i];
+        #endif
+        for (int i = 0; i < c.sum; ++i) c.keys[i] = keys[st + i];
+        
+
         insert(b, keys[p]);
         if (a.type == NODE) {
             for (int i = 0; i <= a.sum; ++i) a.ch[i] = ch[i];
