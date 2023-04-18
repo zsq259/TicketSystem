@@ -20,8 +20,7 @@ template<class Key, class T>
 class BPlusTree {
 private:
     using value = sjtu::pair<Key, T>; 
-    #define NODE true
-    #define LEAF false
+    enum TYPE {LEAF, NODE};
     const static int M = 159;
     const static int maxSize = M;
     const static int minSize = M >> 1;
@@ -36,6 +35,7 @@ private:
         node() = default;
         node(const node &other):sum(other.sum), place(other.place), next(other.next), type(other.type) {
             for (int i = 0; i < other.sum; ++i) keys[i] = other.keys[i];
+            //if (other.type == NODE) 
             for (int i = 0; i <= other.sum; ++i) ch[i] = other.ch[i];
         }
         node &operator =(const node &other) {
@@ -43,6 +43,7 @@ private:
             sum = other.sum; place = other.place; next = other.next;
             type = other.type;
             for (int i = 0; i < other.sum; ++i) keys[i] = other.keys[i];
+            //if (other.type == NODE) 
             for (int i = 0; i <= other.sum; ++i) ch[i] = other.ch[i];
             return *this;
         }
@@ -167,7 +168,7 @@ public:
     }
     void insert(node &a, const value &val) {
         int o = Search(a, val);
-        for (int i = a.sum; i > o; --i) a.keys[i] = a.keys[i - 1];
+        for (int i = a.sum; i > o; --i) std::swap(a.keys[i], a.keys[i - 1]);
         a.keys[o] = val;
         ++a.sum;
     }
@@ -214,7 +215,7 @@ public:
             if (a.type == NODE) a.keys[a.sum] = b.keys[o], ++a.sum;
             deleteChild(b, o + 1);
             Delete(b, o);
-            for (int i = 0; i < c.sum; ++i) a.keys[a.sum + i] = c.keys[i];
+            for (int i = 0; i < c.sum; ++i) std::swap(a.keys[a.sum + i], c.keys[i]);
             if (a.type == NODE) for (int i = 0; i <= c.sum; ++i) a.ch[a.sum + i] = c.ch[i];
             a.next = c.next; a.sum += c.sum;
             ca.putNode(a); ca.putNode(b);
@@ -233,9 +234,9 @@ public:
         int sp = a.sum;
         value keys[M << 1];
         int ch[M << 1];
-        for (int i = 0; i < a.sum; ++i) keys[i] = a.keys[i];
+        for (int i = 0; i < a.sum; ++i) std::swap(keys[i], a.keys[i]);
         if (a.type == NODE) keys[a.sum] = b.keys[o], ++sp;
-        for (int i = 0; i < c.sum; ++i) keys[sp + i] = c.keys[i];
+        for (int i = 0; i < c.sum; ++i) std::swap(keys[sp + i], c.keys[i]);
         sp += c.sum;
         if (a.type == NODE) {
             for (int i = 0; i <= a.sum; ++i) ch[i] = a.ch[i];
@@ -245,8 +246,8 @@ public:
         int p = sp >> 1, st = p + (a.type == NODE);
         a.sum = p;
         c.sum = sp - st;
-        for (int i = 0; i < a.sum; ++i) a.keys[i] = keys[i];
-        for (int i = 0; i < c.sum; ++i) c.keys[i] = keys[st + i];
+        for (int i = 0; i < a.sum; ++i) std::swap(a.keys[i], keys[i]);
+        for (int i = 0; i < c.sum; ++i) std::swap(c.keys[i], keys[st + i]);
         insert(b, keys[p]);
         if (a.type == NODE) {
             for (int i = 0; i <= a.sum; ++i) a.ch[i] = ch[i];

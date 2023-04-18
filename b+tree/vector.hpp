@@ -28,6 +28,7 @@ public:
 	/**
 	 * you can see RandomAccessIterator at CppReference for help.
 	 */
+	static const int startSize = 4;
 	T* head;
 	int sz, sum;
 	std::allocator<T> alloc;
@@ -363,8 +364,8 @@ public:
 	 */
 	void expand() {
 		if (!sz) {
-			sz = 4;
-			head = alloc.allocate(4);
+			sz = startSize;
+			head = alloc.allocate(startSize);
 			//new(head) T{value};
 			return ;
 		}
