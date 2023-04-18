@@ -58,8 +58,19 @@ private:
             write(reinterpret_cast<const char *>(&a), sizeof(a));
             return *this;
         }
+        template<class U>
+        mystream &operator<<(const vector<U> &a) {
+            seekp(0);
+            write(reinterpret_cast<const char *>(&a), sizeof(a));
+            return *this;
+        }
         void readNode(const int &o, node &a) {
             seekg(o);
+            read(reinterpret_cast<char *>(&a), sizeof(a));
+        }
+        template<class U>
+        void readVector(vector<U> &a) {
+            seekg(0);
             read(reinterpret_cast<char *>(&a), sizeof(a));
         }
     };
@@ -67,10 +78,11 @@ private:
     private:
         LinkedHashMap<node> m;
         mystream iofile;
+        mystream bin;
         friend class BPlusTree;
         int c1 = 0, c2 = 0, c3 = 0, c4 = 0;
     public:
-        explicit cache(const char FileName_[], int &sum, int &root) {
+        explicit cache(const char FileName_[], const char BinName_[], int &sum, int &root, vector<int> a) {
             iofile.open(FileName_, fstream::in);
             bool flag = iofile.is_open();
             iofile.close();
@@ -90,6 +102,18 @@ private:
                 iofile.read(reinterpret_cast<char *>(&root), sizeof(int));
                 iofile.seekg(0, mystream::end);
                 sum = ((int)iofile.tellg() - sizeof(int)) / sizeof(node);
+            }
+            bin.open(BinName_, fstream::in);
+            flag = bin.is_open();
+            bin.close();
+            if (!flag) {
+                bin.open(BinName_, fstream::out);
+                bin.close();
+            }
+            bin.open(BinName_, fstream::in | fstream::out | fstream::binary);
+            if (flag) {
+                bin.seekg(0);
+                bin.read(reinterpret_cast<char *>(&a), sizeof(a));
             }
         }
         void getNode(int x, node &a) { 
@@ -115,7 +139,7 @@ private:
     cache ca;
     vector<int> space;
 public:
-    explicit BPlusTree(const char FileName_[]):ca(FileName_, sum, root) {}
+    explicit BPlusTree(const char FileName_[], const char BinName_[]):ca(FileName_, BinName_, sum, root, space) {}
     ~BPlusTree() {
         ca.iofile.seekp(0);
         ca.iofile.write(reinterpret_cast<const char *>(&root), sizeof(int));

@@ -33,7 +33,7 @@ char ch[65];
 
 int main() {
     int n, x, y;
-    sjtu::BPlusTree<Key, int> BPT("data.db");
+    sjtu::BPlusTree<Key, int> BPT("data.db", "bin.db");
     sjtu::vector<int> v;
     std::string s;
     std::cin >> n;
