@@ -1,7 +1,7 @@
 b+tree/1
 b+tree/111.out
 b+tree/std.out
-b+tree/data.db
+b+tree/*.db
 b+tree/std
 b+tree/std.cpp
 b+tree/test

@@ -135,12 +135,6 @@ private:
     vector<int> space;
 public:
     explicit BPlusTree(const char FileName_[], const char BinName_[]):space(), ca(FileName_, BinName_, sum, root) {
-        
-        /*
-        std::cerr << "sssum=" << space.sum << '\n';
-        std::cerr << "size=" << space.size() << '\n';
-        */
-        
         ca.bin.open(BinName_, fstream::in);
         bool flag = ca.bin.is_open();
         ca.bin.close();
@@ -149,24 +143,15 @@ public:
             ca.bin.close();
         }
         ca.bin.open(BinName_, fstream::in | fstream::out | fstream::binary);
-
         space.sum = space.sz = 0;
-        //std::cerr << "sum=" << space.sum << '\n';
-        
-        
         if (flag) ca.bin.readVector(space); 
-
-        }
+    }
     ~BPlusTree() {
-        //std::cerr << "size=" << M << '\n';
-        //std::cerr << "~size=" << space.size() << '\n';
-        
         ca.iofile.seekp(0);
         ca.iofile.write(reinterpret_cast<const char *>(&root), sizeof(int));
         ca.bin << space;
     }
     int newNode(node &a) {
-        //std::cerr << "size=" << space.size() << '\n';
         if (space.size()) a.place = space.back(), space.pop_back();
         else a.place = sum * sizeof(a) + sizeof(int), ++sum;
         a.type = NODE;
