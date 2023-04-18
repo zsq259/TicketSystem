@@ -82,7 +82,7 @@ private:
         friend class BPlusTree;
         int c1 = 0, c2 = 0, c3 = 0, c4 = 0;
     public:
-        explicit cache(const char FileName_[], const char BinName_[], int &sum, int &root, vector<int> a) {
+        explicit cache(const char FileName_[], const char BinName_[], int &sum, int &root, vector<int> &a) {
             iofile.open(FileName_, fstream::in);
             bool flag = iofile.is_open();
             iofile.close();
@@ -143,6 +143,7 @@ public:
     ~BPlusTree() {
         ca.iofile.seekp(0);
         ca.iofile.write(reinterpret_cast<const char *>(&root), sizeof(int));
+        ca.bin << space;
     }
     int newNode(node &a) {
         if (space.size()) a.place = space.back(), space.pop_back();
