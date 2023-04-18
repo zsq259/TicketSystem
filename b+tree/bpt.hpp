@@ -61,7 +61,10 @@ private:
         template<class U>
         mystream &operator<<(const vector<U> &a) {
             seekp(0);
-            write(reinterpret_cast<const char *>(&a), sizeof(a));
+            size_t size = a.size();
+            int p = 0;
+            write(reinterpret_cast<const char *>(&size), sizeof(size));
+            for (int i = 0; i < size; ++i) p = a[i], write(reinterpret_cast<const char *>(&p), sizeof(p));
             return *this;
         }
         void readNode(const int &o, node &a) {
@@ -71,7 +74,10 @@ private:
         template<class U>
         void readVector(vector<U> &a) {
             seekg(0);
-            read(reinterpret_cast<char *>(&a), sizeof(a));
+            size_t size = 0;
+            int p = 0;
+            read(reinterpret_cast<char *>(&size), sizeof(size));
+            while (size--) read(reinterpret_cast<char *>(&p), sizeof(p)), a.push_back(p);
         }
     };
     class cache {
