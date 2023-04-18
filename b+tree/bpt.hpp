@@ -22,7 +22,7 @@ class BPlusTree {
 private:
     using value = sjtu::pair<Key, T>; 
     enum TYPE {LEAF, NODE};
-    const static int M = 159;
+    const static int M = (4096 - sizeof(bool) - sizeof(value) * 2 - sizeof(int) * 5) / (sizeof(int) + sizeof(value));
     const static int maxSize = M;
     const static int minSize = M >> 1;
     class node {
@@ -141,6 +141,7 @@ private:
 public:
     explicit BPlusTree(const char FileName_[], const char BinName_[]):ca(FileName_, BinName_, sum, root, space) {}
     ~BPlusTree() {
+        //std::cerr << "size=" << M << '\n';
         ca.iofile.seekp(0);
         ca.iofile.write(reinterpret_cast<const char *>(&root), sizeof(int));
         ca.bin << space;
@@ -152,10 +153,8 @@ public:
         return a.place;
     }
     int Search(const node &a, const value &val) {
-        for (int i = 0; i < a.sum; ++i) if (val < a.keys[i]) return i;
-        return a.sum;
-        
-        /*
+        //for (int i = 0; i < a.sum; ++i) if (val < a.keys[i]) return i;
+        //return a.sum;
         int L = 0, R = a.sum - 1, o = a.sum;
         while (L <= R) {
             int mid = (L + R) >> 1;
@@ -163,7 +162,6 @@ public:
             else L = mid + 1;
         }
         return o;
-        */
     }
     void insert(node &a, const value &val) {
         int o = Search(a, val);
@@ -218,9 +216,7 @@ public:
             if (a.type == NODE) for (int i = 0; i <= c.sum; ++i) a.ch[a.sum + i] = c.ch[i];
             a.next = c.next; a.sum += c.sum;
             ca.putNode(a); ca.putNode(b);
-
             space.push_back(c.place);
-
             if (a.sum > maxSize) Split(a);
             return ;
         }
@@ -233,21 +229,17 @@ public:
         int sp = a.sum;
         value keys[M << 1];
         int ch[M << 1];
-        
         #ifdef USE_SWAP
         for (int i = 0; i < a.sum; ++i) std::swap(keys[i], a.keys[i]);
         #else
         for (int i = 0; i < a.sum; ++i) keys[i] = a.keys[i];
         #endif
-
         if (a.type == NODE) keys[a.sum] = b.keys[o], ++sp;
-        
         #ifdef USE_SWAP
         for (int i = 0; i < c.sum; ++i) std::swap(keys[sp + i], c.keys[i]);
         #else
         for (int i = 0; i < c.sum; ++i) keys[sp + i] = c.keys[i];
         #endif
-        
         sp += c.sum;
         if (a.type == NODE) {
             for (int i = 0; i <= a.sum; ++i) ch[i] = a.ch[i];
@@ -257,15 +249,12 @@ public:
         int p = sp >> 1, st = p + (a.type == NODE);
         a.sum = p;
         c.sum = sp - st;
-        
         #ifdef USE_SWAP
         for (int i = 0; i < a.sum; ++i) std::swap(a.keys[i], keys[i]);
         #else
         for (int i = 0; i < a.sum; ++i) a.keys[i] = keys[i];
         #endif
         for (int i = 0; i < c.sum; ++i) c.keys[i] = keys[st + i];
-        
-
         insert(b, keys[p]);
         if (a.type == NODE) {
             for (int i = 0; i <= a.sum; ++i) a.ch[i] = ch[i];
@@ -283,9 +272,7 @@ public:
     }
     void Maintain(node &a, int op) {
         node b, c;
-        if (op) {
-            if (a.place == root) { Split(a); return ; }
-        }
+        if (op) { if (a.place == root) { Split(a); return ; } }
         else {
             if (a.place == root) return ;
             findFa(a, b);
@@ -329,10 +316,7 @@ public:
                 else ca.putNode(a);
                 break;
             }
-            else {
-                o = Search(a, val);
-                head = a.ch[o];
-            } 
+            else { o = Search(a, val); head = a.ch[o]; } 
         }
     }
     void Delete(const Key &key, const T &v) {
@@ -350,9 +334,7 @@ public:
                 if (a.sum < minSize) Maintain(a, 0);
                 break;
             }
-            else {
-                head = a.ch[o];
-            }
+            else head = a.ch[o];
         }
     }
     void Find(const Key &key, vector<T> &array) {
@@ -375,7 +357,6 @@ public:
                 head = a.ch[o];
             }
         }
-        return ;
     }
 };
 }
