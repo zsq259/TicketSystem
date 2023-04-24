@@ -11,8 +11,9 @@ b+tree/check
 
 *.db
 *.out
-
-data
+*.log
+testcases
+check
 code
 CMakeCache.txt
 CMakeFiles
