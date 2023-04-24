@@ -7,7 +7,7 @@ void clean (map<char, string> &m) { puts("15"); }
 const int N = 100005;
 int ch[N][27], tot = 0, ed[N];
 map<char, string> m;
-string str, s[24];
+string s[24];
 string a[16] = { "add_user", "login", "logout", "query_profile", "modify_profile", 
                  "add_train", "delete_train", "release_train", "query_train", 
                  "query_ticket", "query_transfer", "buy_ticket", "query_order", 
@@ -32,7 +32,7 @@ void init() {
     }
 }
 
-void cut() {
+void cut(const string &str) {
     int n = 0, p = 0, len = str.size();
     s[n].clear();
     while (p < len && str[p] == ' ') ++p;
@@ -40,10 +40,10 @@ void cut() {
         if (str[p] != ' ') s[n] += str[p];
         else if (p + 1 < len && str[p + 1] != ' ') ++n, s[n].clear();
     }
-    /*
-    cout << "n=" << n << '\n'; 
-    for (int i = 0; i <= n; ++i) cout << s[i] << '\n';
-    */
+
+    // std::cerr << "n=" << n << '\n'; 
+    // for (int i = 0; i <= n; ++i) cout << s[i] << '\n';
+    
     m.clear();
     for (int i = 2; i <= n; i += 2) {
         m.insert(pair<char, string>(s[i][1], s[i + 1]));
@@ -53,6 +53,7 @@ void cut() {
 bool find() {
     int p = 0, len = s[1].size();
     for (int i = 0; i < len; ++i) p = ch[p][num(s[1][i])];
+    cout << s[0] << ' ';
     if (ed[p] < 15) { func[ed[p]](m); return true; }
-    else return false;
+    else { cout << "bye\n"; return false; }
 }

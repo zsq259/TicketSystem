@@ -30,8 +30,22 @@ public:
         privilege = other.privilege;
         return *this;
     }
-    bool operator < (const User &other) const { return username < other.username; }
+    bool operator <  (const User &other) const { return username <  other.username; }
+    bool operator >  (const User &other) const { return username >  other.username; }
+    bool operator <= (const User &other) const { return username <= other.username; }
+    bool operator >= (const User &other) const { return username >= other.username; }
+    bool operator == (const User &other) const { return username == other.username; }
+    bool operator != (const User &other) const { return username != other.username; }
     bool check(const my_string &pw) { return password == pw; }
+    void changeP(const my_string &o) { password = o; }
+    void changeN(const my_string &o) { name = o; } 
+    void changeM(const my_string &o) { mailAddr = o; }
+    void print() {
+        cout << username << ' ' << name << ' ' << mailAddr << ' ' << privilege << '\n';
+    }
+    friend std::ostream &operator<<(std::ostream &os, const User &a) {
+        return os << a.username << ' ' << a.name << ' ' << a.mailAddr << ' ' << a.privilege;
+    } 
 };
 
 void add_user (map<char, string> &m);

@@ -9,6 +9,9 @@ b+tree/test.cpp
 b+tree/test.in
 b+tree/check
 
+*.db
+*.out
+
 data
 code
 CMakeCache.txt

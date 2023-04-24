@@ -15,7 +15,7 @@ int main() {
     string str;
     while(1) {
         if (!getline(cin, str)) break;
-        cut();
+        cut(str);
         if (!find()) break;
     }
     return 0;

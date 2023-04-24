@@ -10,7 +10,7 @@
 using std::string;
 
 void init();
-void cut();
+void cut(const string &str);
 bool find();
 
 #endif

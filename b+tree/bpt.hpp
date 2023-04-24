@@ -21,7 +21,7 @@ class BPlusTree {
 private:
     using value = sjtu::pair<Key, T>; 
     enum TYPE {LEAF, NODE};
-    const static int M = (4096 - sizeof(bool) - sizeof(value) * 2 - sizeof(int) * 5) / (sizeof(int) + sizeof(value));
+    const static int M = 10;//(4096 - sizeof(bool) - sizeof(value) * 2 - sizeof(int) * 5) / (sizeof(int) + sizeof(value));
     const static int maxSize = M;
     const static int minSize = M / 3;
     class node {
@@ -323,8 +323,8 @@ public:
             else { o = Search(a, val); head = a.ch[o]; } 
         }
     }
-    void Delete(const Key &key, const T &v) {
-        if (!root) return ;
+    bool Delete(const Key &key, const T &v) {
+        if (!root) return false;
         value val = value(key, v);
         node a;
         int head = root, o = 0;
@@ -332,7 +332,7 @@ public:
             ca.getNode(head, a);
             o = Search(a, val);
             if (a.type == LEAF) {
-                if (!o || a.keys[o - 1] != val) return ;
+                if (!o || a.keys[o - 1] != val) return false;
                 Delete(a, o - 1);
                 ca.putNode(a);
                 if (a.sum < minSize) Maintain(a, 0);
@@ -340,6 +340,7 @@ public:
             }
             else head = a.ch[o];
         }
+        return true;
     }
     void Find(const Key &key, vector<T> &array) {
         node a;

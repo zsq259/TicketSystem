@@ -56,13 +56,15 @@ public:
     }
 	my_string &operator + (const my_string &other) { strcat(key, other.key); return *this; }
 	operator string() { return string(key); }
-    bool operator < (const my_string &other) const { return strcmp(key, other.key) < 0; }
+    bool operator <  (const my_string &other) const { return strcmp(key, other.key) <  0; }
     bool operator == (const my_string &other) const { return strcmp(key, other.key) == 0; }
-    bool operator > (const my_string &other) const { return strcmp(key, other.key) > 0; }
-    bool operator != (const my_string &other) const { return strcmp(key, other.key); }
+    bool operator >  (const my_string &other) const { return strcmp(key, other.key) >  0; }
+    bool operator != (const my_string &other) const { return strcmp(key, other.key) != 0; }
     bool operator <= (const my_string &other) const { return strcmp(key, other.key) <= 0; }
     bool operator >= (const my_string &other) const { return strcmp(key, other.key) >= 0; }
+	friend std::ostream &operator<<(std::ostream &os, const my_string &a) { return os << a.key; }
 };
+
 
 }
 
