@@ -21,9 +21,9 @@ class BPlusTree {
 private:
     using value = sjtu::pair<Key, T>; 
     enum TYPE {LEAF, NODE};
-    const static int M = 300;//(4096 - sizeof(bool) - sizeof(value) * 2 - sizeof(int) * 5) / (sizeof(int) + sizeof(value));
+    const static int M = 51;//(4096 - sizeof(bool) - sizeof(value) * 2 - sizeof(int) * 5) / (sizeof(int) + sizeof(value));
     const static int maxSize = M;
-    const static int minSize = M / 3;
+    const static int minSize = M / 2;
     class node {
     private:
         int sum = 0, place = 0, next = 0;
@@ -135,6 +135,7 @@ private:
 public:
     explicit BPlusTree(const char FileName_[], const char BinName_[]):space(), ca(FileName_, BinName_, sum, root) {
         ca.bin.open(BinName_, fstream::in);
+        //std::cerr << "M=" << M << '\n';
         bool flag = ca.bin.is_open();
         ca.bin.close();
         if (!flag) {
