@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <cstring>
 #include "bpt.hpp"
-#include "vector.hpp"
+#include "../STLite/vector.hpp"
 
 class Key{
 public:

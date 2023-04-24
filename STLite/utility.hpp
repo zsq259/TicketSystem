@@ -3,6 +3,8 @@
 
 #include <utility>
 #include <iostream>
+#include <cstring>
+using std::string;
 
 namespace sjtu {
 
@@ -39,6 +41,28 @@ std::ostream &operator <<(std::ostream &os, const pair<T1, T2> &a) {
 	os << a.first << ' ' << a.second;
 	return os;
 }
+
+class my_string{
+public:
+    char key[65];
+    my_string() {strcpy(key, ""); }
+    my_string(const char key_[]) { strcpy(key, key_); }
+	my_string(const string &s) { strcpy(key, s.data()); }
+    my_string(const my_string &other) { strcpy(key, other.key); }
+    my_string operator = (const my_string &other) { 
+        if (&other == this) return *this; 
+        strcpy(key, other.key); 
+        return *this;    
+    }
+	my_string &operator + (const my_string &other) { strcat(key, other.key); return *this; }
+	operator string() { return string(key); }
+    bool operator < (const my_string &other) const { return strcmp(key, other.key) < 0; }
+    bool operator == (const my_string &other) const { return strcmp(key, other.key) == 0; }
+    bool operator > (const my_string &other) const { return strcmp(key, other.key) > 0; }
+    bool operator != (const my_string &other) const { return strcmp(key, other.key); }
+    bool operator <= (const my_string &other) const { return strcmp(key, other.key) <= 0; }
+    bool operator >= (const my_string &other) const { return strcmp(key, other.key) >= 0; }
+};
 
 }
 

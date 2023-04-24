@@ -8,8 +8,7 @@
 #include <fstream>
 #include <cstdio>
 #include <cstring>
-#include "utility.hpp"
-#include "vector.hpp"
+#include "../STLite/vector.hpp"
 #include "LinkedHashMap.hpp"
 using std::fstream;
 using std::istream;
@@ -363,6 +362,7 @@ public:
             }
         }
     }
+    bool empty() { return !sum; }
 };
 }
 

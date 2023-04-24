@@ -9,6 +9,7 @@ b+tree/test.cpp
 b+tree/test.in
 b+tree/check
 
+data
 code
 CMakeCache.txt
 CMakeFiles
