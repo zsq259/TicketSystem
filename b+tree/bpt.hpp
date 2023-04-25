@@ -209,12 +209,10 @@ public:
         else insert(b, c.keys[0]);
         insertChild(b, o, a.place);
         ca.putNode(a); ca.putNode(b); ca.putNode(c);
-        // if (b.sum > maxSize) Maintain(b, 1);
-        if (b.sum > maxSize) Split(b);
+        if (b.sum > maxSize) Maintain(b, 1);
     }
     void Merge(node &b, node &a, node &c) {
-        //if (a.sum + c.sum < maxSize) {
-        if (1) {
+        if (a.sum + c.sum < maxSize) {
             int o = Search(b, a.keys[a.sum - 1]);
             if (a.type == NODE) a.keys[a.sum] = b.keys[o], ++a.sum;
             deleteChild(b, o + 1);
@@ -227,9 +225,6 @@ public:
             if (a.sum > maxSize) Split(a);
             return ;
         }
-
-        std::cerr << "sadiahfiashf\n";
-
         if (a.sum + c.sum > maxSize + minSize + (minSize >> 1)) {
             if (a.sum > maxSize) Split(a);
             if (c.sum > maxSize) Split(c);
@@ -323,8 +318,7 @@ public:
             ca.getNode(head, a);
             if (a.type == LEAF) {
                 insert(a, val);
-                //if (a.sum > maxSize) Maintain(a, 1);
-                if (a.sum > maxSize) Split(a);
+                if (a.sum > maxSize) Maintain(a, 1);
                 else ca.putNode(a);
                 break;
             }
