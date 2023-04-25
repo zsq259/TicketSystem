@@ -21,15 +21,15 @@ class BPlusTree {
 private:
     using value = sjtu::pair<Key, T>; 
     enum TYPE {LEAF, NODE};
-    const static int M = 51;//(4096 - sizeof(bool) - sizeof(value) * 2 - sizeof(int) * 5) / (sizeof(int) + sizeof(value));
+    const static int M = 6;//(4096 - sizeof(bool) - sizeof(value) * 2 - sizeof(int) * 5) / (sizeof(int) + sizeof(value));
     const static int maxSize = M;
-    const static int minSize = M / 3;
+    const static int minSize = M / 2;
     class node {
     private:
         int sum = 0, place = 0, next = 0;
         bool type;
-        value keys[M + 2];
-        int ch[M + 2] = {};
+        value keys[M + 3];
+        int ch[M + 3] = {};
         friend class BPlusTree;
     public:
         node() = default;
@@ -209,10 +209,12 @@ public:
         else insert(b, c.keys[0]);
         insertChild(b, o, a.place);
         ca.putNode(a); ca.putNode(b); ca.putNode(c);
-        if (b.sum > maxSize) Maintain(b, 1);
+        // if (b.sum > maxSize) Maintain(b, 1);
+        if (b.sum > maxSize) Split(b);
     }
     void Merge(node &b, node &a, node &c) {
-        if (a.sum + c.sum < maxSize) {
+        //if (a.sum + c.sum < maxSize) {
+        if (1) {
             int o = Search(b, a.keys[a.sum - 1]);
             if (a.type == NODE) a.keys[a.sum] = b.keys[o], ++a.sum;
             deleteChild(b, o + 1);
@@ -225,6 +227,9 @@ public:
             if (a.sum > maxSize) Split(a);
             return ;
         }
+
+        std::cerr << "sadiahfiashf\n";
+
         if (a.sum + c.sum > maxSize + minSize + (minSize >> 1)) {
             if (a.sum > maxSize) Split(a);
             if (c.sum > maxSize) Split(c);
@@ -283,6 +288,7 @@ public:
             findFa(a, b);
             if (b.place == root && b.sum == 1 && !b.ch[1]) { space.push_back(root); root = a.place; return ;}
         }
+        findFa(a, b);
         int o = Search(b, a.keys[a.sum - 1]), size = 0;
         int flag = -1;
         if (o) ca.getNode(b.ch[o - 1], c), size = c.sum, flag = 0;
@@ -317,7 +323,8 @@ public:
             ca.getNode(head, a);
             if (a.type == LEAF) {
                 insert(a, val);
-                if (a.sum > maxSize) Maintain(a, 1);
+                //if (a.sum > maxSize) Maintain(a, 1);
+                if (a.sum > maxSize) Split(a);
                 else ca.putNode(a);
                 break;
             }
