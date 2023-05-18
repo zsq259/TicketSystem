@@ -6,7 +6,6 @@
 #include "../STLite/map.hpp"
 using std::cout;
 using std::string;
-using sjtu::map;
 using sjtu::my_string;
 using sjtu::BPlusTree;
 
@@ -48,10 +47,10 @@ public:
     } 
 };
 
-void add_user (map<char, string> &m);
-void login (map<char, string> &m);
-void logout (map<char, string> &m);
-void query_profile (map<char, string> &m);
-void modify_profile (map<char, string> &m);
+int add_user (string (&m)[256]);
+int login (string (&m)[256]);
+int logout (string (&m)[256]);
+int query_profile (string (&m)[256]);
+int modify_profile (string (&m)[256]);
 
 #endif

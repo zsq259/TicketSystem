@@ -6,10 +6,13 @@
 #include "../STLite/map.hpp"
 #include "user.h"
 
-void query_ticket (map<char, string> &m);
-void query_transfer (map<char, string> &m);
-void buy_ticket (map<char, string> &m);
-void query_order (map<char, string> &m);
-void refund_ticket (map<char, string> &m);
+class Train;
+void stationAdd(const my_string &a, const Train &b);
+
+int query_ticket (string (&m)[256]);
+int query_transfer (string (&m)[256]);
+int buy_ticket (string (&m)[256]);
+int query_order (string (&m)[256]);
+int refund_ticket (string (&m)[256]);
 
 #endif

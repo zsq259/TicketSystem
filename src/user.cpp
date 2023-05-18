@@ -1,66 +1,67 @@
 #include "user.h"
 
 BPlusTree<my_string, User> userdb("user.db", "user_bin.db");
-map<my_string, bool> user_login;
+sjtu::map<my_string, bool> user_login;
 vector<User> array;
 
-void add_user (map<char, string> &m) {
+int add_user (string (&m)[256]) {
     if (userdb.empty()) {
         userdb.Insert(m['u'], User(m['u'], m['p'], m['n'], m['m'], "10"));
-        cout << "0\n";
-        return ;
+        return 0;
     }
     my_string curid(m['c']);
-    if (user_login.find(curid) == user_login.end() || !user_login[curid]) { cout << "-1\n"; return ; }
+    if (user_login.find(curid) == user_login.end() || !user_login[curid]) { return -1; }
     userdb.Find(curid, array);
-    if (array.empty() || array[0].privilege <= stoi(m['g'])) { cout << "-1\n"; return ; }
+    if (array.empty() || array[0].privilege <= stoi(m['g'])) { return -1; }
     userdb.Find(m['u'], array);
-    if (array.size()) { cout << "-1\n"; return ; }
+    if (array.size()) { return -1; }
     userdb.Insert(m['u'], User(m['u'], m['p'], m['n'], m['m'], m['g']));
-    cout << "0\n";
+    return 0;
 }
-void login (map<char, string> &m) {
+int login (string (&m)[256]) {
     my_string id(m['u']);
     userdb.Find(id, array);
-    if (array.empty()) { cout << "-1\n"; return ; }
-    if (user_login.find(id) != user_login.end() && user_login[id]) { cout << "-1\n"; return ; }
-    if (!array[0].check(m['p'])) { cout << "-1\n"; return ; }
+    if (array.empty()) { return -1; }
+    if (user_login.find(id) != user_login.end() && user_login[id]) { return -1; }
+    if (!array[0].check(m['p'])) { return -1; }
     user_login[id] = true;
-    cout << "0\n";
+    return 0;
 }
-void logout (map<char, string> &m) {
+int logout (string (&m)[256]) {
     my_string id(m['u']);
-    if (user_login.find(id) == user_login.end() || !user_login[id]) { cout << "-1\n"; return ; }
+    if (user_login.find(id) == user_login.end() || !user_login[id]) { return -1; }
     user_login[id] = false;
-    cout << "0\n";
+    return 0;
 }
-void query_profile (map<char, string> &m) {
+int query_profile (string (&m)[256]) {
     my_string curid(m['c']), id(m['u']);
-    if (user_login.find(curid) == user_login.end() || !user_login[curid]) { cout << "-1\n"; return ; }
+    if (user_login.find(curid) == user_login.end() || !user_login[curid]) { return -1; }
     userdb.Find(id, array);
-    if (array.empty()) { cout << "-1\n"; return ; }
+    if (array.empty()) { return -1; }
     User now(array[0]);
     userdb.Find(curid, array);
-    if (array.empty()) { cout << "-1\n"; return ; }
-    if (array[0].privilege < now.privilege || (array[0].privilege == now.privilege && array[0] != now)) { cout << "-1\n"; return ; }
+    if (array.empty()) { return -1; }
+    if (array[0].privilege < now.privilege || (array[0].privilege == now.privilege && array[0] != now)) { return -1; }
     now.print();
+    return 0;
 }
-void modify_profile (map<char, string> &m) {
+int modify_profile (string (&m)[256]) {
     my_string curid(m['c']), id(m['u']);
-    if (user_login.find(curid) == user_login.end() || !user_login[curid]) { cout << "-1\n"; return ; }
+    if (user_login.find(curid) == user_login.end() || !user_login[curid]) { return -1; }
     userdb.Find(id, array);
-    if (array.empty()) { cout << "-1\n"; return ; }
+    if (array.empty()) { return -1; }
     User now(array[0]);
     userdb.Find(curid, array);
-    if (array.empty()) { cout << "-1\n"; return ; }
-    if (array[0].privilege < now.privilege || (array[0].privilege == now.privilege && array[0] != now)) { cout << "-1\n"; return ; }
-    if (m.find('g') != m.end() && array[0].privilege <= stod(m['g'])) { cout << "-1\n"; return ; }
+    if (array.empty()) { return -1; }
+    if (array[0].privilege < now.privilege || (array[0].privilege == now.privilege && array[0] != now)) { return -1; }
+    if (!m['g'].empty() && array[0].privilege <= stod(m['g'])) { return -1; }
     if (!userdb.Delete(id, now)) puts("sbhastinmydd");
     // o(m[]):string -> my_string
-    if (m.find('g') != m.end()) now.privilege = stod(m['g']);
-    if (m.find('p') != m.end()) now.changeP(m['p']);
-    if (m.find('n') != m.end()) now.changeN(m['n']);
-    if (m.find('m') != m.end()) now.changeM(m['m']);
+    if (!m['g'].empty()) now.privilege = stod(m['g']);
+    if (!m['p'].empty()) now.changeP(m['p']);
+    if (!m['n'].empty()) now.changeN(m['n']);
+    if (!m['m'].empty()) now.changeM(m['m']);
     userdb.Insert(id, now);
     now.print();
+    return 0;
 }

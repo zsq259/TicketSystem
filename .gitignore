@@ -10,9 +10,13 @@ b+tree/test.in
 b+tree/check
 
 *.db
+*.bin
+*.in
 *.out
 *.log
 testcases
+data
+build
 check
 code
 CMakeCache.txt

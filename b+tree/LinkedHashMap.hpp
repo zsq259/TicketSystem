@@ -5,8 +5,8 @@ namespace sjtu {
 template<class T>
 class LinkedHashMap {
 private:
-    const static int N = 1000000;
-    const static int maxSize = 2024;
+    const static int N = 100000;
+    const static int maxSize = 224;
     struct Node {
         Node* next = nullptr;
         Node* timePre = nullptr, *timeNxt = nullptr;

@@ -3,6 +3,7 @@
 
 #define USE_CACHE
 #define USE_SWAP
+//#define USE_MAINTAIN
 //#define PRINT_CNT
 #include <iostream>
 #include <fstream>
@@ -21,7 +22,7 @@ class BPlusTree {
 private:
     using value = sjtu::pair<Key, T>; 
     enum TYPE {LEAF, NODE};
-    const static int M = 6;//(4096 - sizeof(bool) - sizeof(value) * 2 - sizeof(int) * 5) / (sizeof(int) + sizeof(value));
+    const static int M = 105;//(4096 - sizeof(bool) - sizeof(value) * 2 - sizeof(int) * 5) / (sizeof(int) + sizeof(value));
     const static int maxSize = M;
     const static int minSize = M / 2;
     class node {
@@ -209,9 +210,21 @@ public:
         else insert(b, c.keys[0]);
         insertChild(b, o, a.place);
         ca.putNode(a); ca.putNode(b); ca.putNode(c);
+        #ifdef USE_MAINTAIN
         if (b.sum > maxSize) Maintain(b, 1);
+        #else
+        if (b.sum > maxSize) Split(b);
+        #endif
     }
     void Merge(node &b, node &a, node &c) {
+        
+        if (a.sum>= maxSize || c.sum >= maxSize) {// + minSize + (minSize >> 1)) {
+            std::cerr << a.sum << ' ' << c.sum << '\n';
+            if (a.sum >= maxSize) Split(a);
+            if (c.sum >= maxSize) Split(c);
+            return ;
+        }
+        
         if (a.sum + c.sum < maxSize) {
             int o = Search(b, a.keys[a.sum - 1]);
             if (a.type == NODE) a.keys[a.sum] = b.keys[o], ++a.sum;
@@ -225,15 +238,10 @@ public:
             if (a.sum > maxSize) Split(a);
             return ;
         }
-        if (a.sum + c.sum > maxSize + minSize + (minSize >> 1)) {
-            if (a.sum > maxSize) Split(a);
-            if (c.sum > maxSize) Split(c);
-            return ;
-        }
         int o = Search(b, a.keys[a.sum - 1]);
         int sp = a.sum;
-        value keys[M << 1];
-        int ch[M << 1];
+        value keys[(M + 3) << 1];
+        int ch[(M + 3) << 1];
         #ifdef USE_SWAP
         for (int i = 0; i < a.sum; ++i) std::swap(keys[i], a.keys[i]);
         #else
@@ -281,15 +289,16 @@ public:
         else {
             if (a.place == root) return ;
             findFa(a, b);
-            if (b.place == root && b.sum == 1 && !b.ch[1]) { space.push_back(root); root = a.place; return ;}
+            if (b.place == root && ((b.sum == 1 && !b.ch[1]) || b.sum == 0)) { space.push_back(root); root = a.place; return ;}
         }
-        findFa(a, b);
+        if (op) findFa(a, b);
         int o = Search(b, a.keys[a.sum - 1]), size = 0;
         int flag = -1;
         if (o) ca.getNode(b.ch[o - 1], c), size = c.sum, flag = 0;
         if (o < b.sum && b.ch[o + 1]) {
             ca.getNode(b.ch[o + 1], c); flag = 1;
-            if (o && op? (c.sum > size) : (c.sum < size)) ca.getNode(b.ch[o - 1], c), flag = 0;
+            //if (o && (op? (c.sum > size) : (c.sum < size))) ca.getNode(b.ch[o - 1], c), flag = 0;
+            if (o && (!op) && c.sum < size) ca.getNode(b.ch[o - 1], c), flag = 0;
         }
         if (flag == -1) { 
             if (op) Split(a); 
@@ -318,7 +327,11 @@ public:
             ca.getNode(head, a);
             if (a.type == LEAF) {
                 insert(a, val);
+                #ifdef USE_MAINTAIN
                 if (a.sum > maxSize) Maintain(a, 1);
+                #else
+                if (a.sum > maxSize) Split(a);
+                #endif
                 else ca.putNode(a);
                 break;
             }

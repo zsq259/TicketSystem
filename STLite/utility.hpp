@@ -44,7 +44,7 @@ std::ostream &operator <<(std::ostream &os, const pair<T1, T2> &a) {
 
 class my_string{
 public:
-    char key[65];
+    char key[35];
     my_string() {strcpy(key, ""); }
     my_string(const char key_[]) { strcpy(key, key_); }
 	my_string(const string &s) { strcpy(key, s.data()); }

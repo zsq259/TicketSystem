@@ -2,17 +2,17 @@
 using sjtu::map;
 using sjtu::pair;
 
-void clean (map<char, string> &m) { puts("15"); }
+int clean (string (&m)[256]) { puts("15"); }
 
 const int N = 100005;
 int ch[N][27], tot = 0, ed[N];
-map<char, string> m;
+string m[256];
 string s[24];
 string a[16] = { "add_user", "login", "logout", "query_profile", "modify_profile", 
                  "add_train", "delete_train", "release_train", "query_train", 
                  "query_ticket", "query_transfer", "buy_ticket", "query_order", 
                  "refund_ticket", "clean", "exit" };
-void (*func[15])(map<char, string> &m) = { add_user, login, logout, query_profile, modify_profile, 
+int (*func[15])(string (&m)[256]) = { add_user, login, logout, query_profile, modify_profile, 
                                            add_train, delete_train, release_train, query_train, 
                                            query_ticket, query_transfer, buy_ticket, query_order, 
                                            refund_ticket, clean };
@@ -42,11 +42,12 @@ void cut(const string &str) {
     }
 
     // std::cerr << "n=" << n << '\n'; 
-    // for (int i = 0; i <= n; ++i) cout << s[i] << '\n';
+    // for (int i = 0; i <= n; ++i) std::cerr << s[i] << ' ';
+    // std::cerr << '\n';
     
-    m.clear();
+    for (int i = 'a'; i <= 'z'; ++i) m[i].clear();
     for (int i = 2; i <= n; i += 2) {
-        m.insert(pair<char, string>(s[i][1], s[i + 1]));
+        m[s[i][1]] = s[i + 1];
     }
 }
 
@@ -54,6 +55,10 @@ bool find() {
     int p = 0, len = s[1].size();
     for (int i = 0; i < len; ++i) p = ch[p][num(s[1][i])];
     cout << s[0] << ' ';
-    if (ed[p] < 15) { func[ed[p]](m); return true; }
+    if (ed[p] < 15) {
+        int op = func[ed[p]](m);
+        if (op != 0 || (ed[p] != 3 && ed[p] != 4 && ed[p] != 8)) cout << op << '\n';
+        return true; 
+    }
     else { cout << "bye\n"; return false; }
 }
