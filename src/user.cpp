@@ -4,13 +4,15 @@ BPlusTree<my_string, User> userdb("user.db", "user_bin.db");
 sjtu::map<my_string, bool> user_login;
 vector<User> array;
 
+bool isLogin(const my_string &id) { return user_login.find(id) != user_login.end() && user_login[id]; }
+
 int add_user (string (&m)[256]) {
     if (userdb.empty()) {
         userdb.Insert(m['u'], User(m['u'], m['p'], m['n'], m['m'], "10"));
         return 0;
     }
     my_string curid(m['c']);
-    if (user_login.find(curid) == user_login.end() || !user_login[curid]) { return -1; }
+    if (!isLogin(curid) || !user_login[curid]) { return -1; }
     userdb.Find(curid, array);
     if (array.empty() || array[0].privilege <= stoi(m['g'])) { return -1; }
     userdb.Find(m['u'], array);
@@ -22,20 +24,20 @@ int login (string (&m)[256]) {
     my_string id(m['u']);
     userdb.Find(id, array);
     if (array.empty()) { return -1; }
-    if (user_login.find(id) != user_login.end() && user_login[id]) { return -1; }
+    if (isLogin(id) && user_login[id]) { return -1; }
     if (!array[0].check(m['p'])) { return -1; }
     user_login[id] = true;
     return 0;
 }
 int logout (string (&m)[256]) {
     my_string id(m['u']);
-    if (user_login.find(id) == user_login.end() || !user_login[id]) { return -1; }
+    if (!isLogin(id) || !user_login[id]) { return -1; }
     user_login[id] = false;
     return 0;
 }
 int query_profile (string (&m)[256]) {
     my_string curid(m['c']), id(m['u']);
-    if (user_login.find(curid) == user_login.end() || !user_login[curid]) { return -1; }
+    if (!isLogin(curid) || !user_login[curid]) { return -1; }
     userdb.Find(id, array);
     if (array.empty()) { return -1; }
     User now(array[0]);
@@ -47,7 +49,7 @@ int query_profile (string (&m)[256]) {
 }
 int modify_profile (string (&m)[256]) {
     my_string curid(m['c']), id(m['u']);
-    if (user_login.find(curid) == user_login.end() || !user_login[curid]) { return -1; }
+    if (!isLogin(curid) || !user_login[curid]) { return -1; }
     userdb.Find(id, array);
     if (array.empty()) { return -1; }
     User now(array[0]);

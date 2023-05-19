@@ -6,9 +6,15 @@ vector<Train> trainArray;
 static SeatFile seats("seat.db");
 int SeatFile::sum = 0;
 
+void findTrain(const my_string &a, vector<Train> &v) {
+    traindb.Find(a, v);
+}
+
 int add_train (string (&m)[256]) {
+    
     traindb.Find(m['i'], trainArray);
     if (trainArray.size()) return -1;
+    
     Train a;
     a.id = m['i']; a.place = ++SeatFile::sum;
     a.stationNum = stoi(m['n']);
@@ -29,6 +35,7 @@ int add_train (string (&m)[256]) {
     }
     a.prices[tot] = stoi(str); tot = 0; str.clear();
 
+
     for (int i = 0, k = m['t'].size(); i < k; ++i) {
         if (m['t'][i] == '|') a.travelTimes[tot] = stoi(str), ++tot, str.clear();
         else str += m['t'][i];
@@ -47,11 +54,19 @@ int add_train (string (&m)[256]) {
         if (m['d'][i] == '|') a.startSaleDate = Date(str), ++tot, str.clear();
         else str += m['d'][i];
     }
+
+    
+    std::cerr << m['i'] << '\n';
+
     a.endSaleDate = Date(str);
-    for (int i = 0; i < a.stationNum; ++i) stationAdd(a.stations[i], a);
+    for (int i = 0; i < a.stationNum; ++i) {
+        if (m['i'] == "TOTHEEOLDCAUSE") std::cerr << "i= " << i << ' ' << a.stations[i] << '\n';
+        stationAdd(a.stations[i], a);
+    }
 
     traindb.Insert(a.id, a);
 
+    
 
     DateTrainSeat p;
     for (int i = 0; i < a.stationNum; ++i) p[i] = a.seatNum;
@@ -72,6 +87,7 @@ int release_train (string (&m)[256]) {
     traindb.Find(m['i'], trainArray);
     if (!trainArray.size()) return -1;
     if (trainArray[0].released) return -1;
+    traindb.Delete(m['i'], trainArray[0]); 
     trainArray[0].released = true;
     traindb.Insert(m['i'], trainArray[0]);
     return 0;
@@ -79,8 +95,8 @@ int release_train (string (&m)[256]) {
 int query_train (string (&m)[256]) {
     traindb.Find(m['i'], trainArray);
     if (!trainArray.size()) return -1;
-    
-    // cout << "XXXXX= " << trainArray[0].prices[0] << '\n';
+    int day = Date(m['d']);
+    if (day < trainArray[0].startSaleDate || day > trainArray[0].endSaleDate) return -1;
     std::cout << trainArray[0].id << ' ' << trainArray[0].type << '\n';
     DateTrainSeat p;
     DateTime O(Date(m['d']), Time(trainArray[0].startTime));

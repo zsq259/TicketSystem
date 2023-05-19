@@ -10,6 +10,7 @@ using namespace sjtu;
 class Date {
     public:
     std::string s;
+    Date() {}
     Date(std::string s_):s(s_) {}
     Date(int x) {  
         if (!x) s =  "xx-xx";
@@ -25,6 +26,7 @@ class Date {
         if (mm == 6) return nn;
         if (mm == 7) return nn + 30;
         if (mm == 8) return nn + 61;
+        return 0;
     }
     void print() { cout << s; }
 };
@@ -32,6 +34,7 @@ class Date {
 class Time {
     public:
     std::string s;
+    Time() {}
     Time(std::string s_):s(s_) {}
     Time(int x) {
         if (x == -1)  s =  "xx:xx";
@@ -50,6 +53,7 @@ class DateTime {
     public:
     Date date;
     Time time;
+    DateTime():date(), time() {}
     DateTime(Date a, Time b):date(a), time(b) {}
     DateTime(string a, string b):date(a), time(b) {}
     void print() { date.print(); cout << ' '; time.print(); }
@@ -191,6 +195,8 @@ class SeatFile {
         io.write(reinterpret_cast<const char *>(&a), sizeof(a));
     }
 };
+
+void findTrain(const my_string &a, vector<Train> &v);
 
 int add_train (string (&m)[256]);
 int delete_train (string (&m)[256]);

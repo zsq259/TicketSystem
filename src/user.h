@@ -47,6 +47,8 @@ public:
     } 
 };
 
+bool isLogin(const my_string &id);
+
 int add_user (string (&m)[256]);
 int login (string (&m)[256]);
 int logout (string (&m)[256]);

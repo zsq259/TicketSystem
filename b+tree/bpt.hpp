@@ -22,7 +22,7 @@ class BPlusTree {
 private:
     using value = sjtu::pair<Key, T>; 
     enum TYPE {LEAF, NODE};
-    const static int M = 105;//(4096 - sizeof(bool) - sizeof(value) * 2 - sizeof(int) * 5) / (sizeof(int) + sizeof(value));
+    const static int M = 55;//(4096 - sizeof(bool) - sizeof(value) * 2 - sizeof(int) * 5) / (sizeof(int) + sizeof(value));
     const static int maxSize = M;
     const static int minSize = M / 2;
     class node {
@@ -297,8 +297,8 @@ public:
         if (o) ca.getNode(b.ch[o - 1], c), size = c.sum, flag = 0;
         if (o < b.sum && b.ch[o + 1]) {
             ca.getNode(b.ch[o + 1], c); flag = 1;
-            //if (o && (op? (c.sum > size) : (c.sum < size))) ca.getNode(b.ch[o - 1], c), flag = 0;
-            if (o && (!op) && c.sum < size) ca.getNode(b.ch[o - 1], c), flag = 0;
+            if (o && (op? (c.sum > size) : (c.sum < size))) ca.getNode(b.ch[o - 1], c), flag = 0;
+            //if (o && (!op) && c.sum < size) ca.getNode(b.ch[o - 1], c), flag = 0;
         }
         if (flag == -1) { 
             if (op) Split(a); 
@@ -376,6 +376,19 @@ public:
                 for (int i = 0; i < a.sum; ++i) if (key <= a.keys[i].first) { o = i; break; }
                 head = a.ch[o];
             }
+        }
+    }
+    void FindAll(vector<T> &array) {
+        node a;
+        array.clear();
+        int head = root;
+        while (head) {
+            ca.getNode(head, a);
+            if (a.type == LEAF) {
+                for (int i = 0; i < a.sum; ++i) array.push_back(a.keys[i].second);
+                head = a.next;
+            }
+            else head = a.ch[0];
         }
     }
     bool empty() { return !sum; }
