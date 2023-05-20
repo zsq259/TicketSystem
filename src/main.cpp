@@ -10,11 +10,16 @@
 using std::string;
 using std::cin;
 
+char str[4005];
+
 int main() {
     init();
-    string str;
     while(1) {
-        if (!getline(cin, str)) break;
+        //str.clear();
+        //puts("ok");
+        if (!cin.getline(str, 4000)) break;
+        //puts("ok1");
+        //std::cout << str << '\n';
         cut(str);
         if (!find()) break;
     }

@@ -32,6 +32,7 @@ class Order{
 }; 
 
 void stationAdd(const my_string &a, const Train &b);
+void stationDel(const my_string &a, const Train &b);
 
 int query_ticket (string (&m)[256]);
 int query_transfer (string (&m)[256]);

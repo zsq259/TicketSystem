@@ -19,16 +19,17 @@ class Date {
         else if (x <= 92) s =  "08-" + string(x < 71? "0" : "") + std::to_string(x - 61);
         else s =  "09-" + string(x < 102? "0" : "") + std::to_string(x - 92);
     }
-    operator int() { 
+    operator int() const { 
         int mm = 0, nn = 0;
         mm = s[1] - '0';
         nn = (s[3] - '0') * 10 + s[4] - '0';
         if (mm == 6) return nn;
         if (mm == 7) return nn + 30;
         if (mm == 8) return nn + 61;
+        if (mm == 9) return nn + 92;
         return 0;
     }
-    void print() { cout << s; }
+    const void print() const { cout << s; }
 };
 
 class Time {
@@ -40,13 +41,13 @@ class Time {
         if (x == -1)  s =  "xx:xx";
         else s = string(x / 60 < 10? "0" : "") + std::to_string(x / 60) + ":" + string(x % 60 < 10? "0" : "") + std::to_string(x % 60);
     }
-    operator int() {
+    operator int() const {
         int mm = 0, nn = 0;
         mm = (s[0] - '0') * 10 + s[1] - '0';
         nn = (s[3] - '0') * 10 + s[4] - '0';
         return mm * 60 + nn;
     }
-    void print() { cout << s; }
+    const void print() const { cout << s; }
 };
 
 class DateTime {
@@ -56,7 +57,7 @@ class DateTime {
     DateTime():date(), time() {}
     DateTime(Date a, Time b):date(a), time(b) {}
     DateTime(string a, string b):date(a), time(b) {}
-    void print() { date.print(); cout << ' '; time.print(); }
+    const void print() const { date.print(); cout << ' '; time.print(); }
     DateTime &operator+ (int x) {
         // puts("\n\nstart");
         // print();
@@ -70,6 +71,9 @@ class DateTime {
         // print();
         // puts("end\n\n");
         return *this;
+    }
+    int operator-(const DateTime &other) {
+        return ((int)date - (int)other.date) * 24 * 60 + (int)time - (int)other.time;
     }
     DateTime &operator+= (int x) {
         return (*this) + x;

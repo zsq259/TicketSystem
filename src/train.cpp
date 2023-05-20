@@ -55,12 +55,9 @@ int add_train (string (&m)[256]) {
         else str += m['d'][i];
     }
 
-    
-    std::cerr << m['i'] << '\n';
-
     a.endSaleDate = Date(str);
     for (int i = 0; i < a.stationNum; ++i) {
-        if (m['i'] == "TOTHEEOLDCAUSE") std::cerr << "i= " << i << ' ' << a.stations[i] << '\n';
+        //if (m['i'] == "TOTHEEOLDCAUSE") std::cerr << "i= " << i << ' ' << a.stations[i] << '\n';
         stationAdd(a.stations[i], a);
     }
 
@@ -81,15 +78,26 @@ int delete_train (string (&m)[256]) {
     if (!trainArray.size()) return -1;
     if (trainArray[0].released) return -1;
     traindb.Delete(m['i'], Train(m['i']));
+    for (int i = 0; i < trainArray[0].stationNum; ++i) {
+        stationDel(trainArray[0].stations[i], trainArray[0]);
+    }
+
     return 0;
 }
 int release_train (string (&m)[256]) {
-    traindb.Find(m['i'], trainArray);
+    
+    my_string id(m['i']);
+    traindb.Find(id, trainArray);
     if (!trainArray.size()) return -1;
     if (trainArray[0].released) return -1;
-    traindb.Delete(m['i'], trainArray[0]); 
+    traindb.Delete(id, trainArray[0]);
+    for (int i = 0; i < trainArray[0].stationNum; ++i) {
+        //std::cerr << "i=" << i << trainArray[0].stations[i] << '\n';
+        stationDel(trainArray[0].stations[i], trainArray[0]);
+    }
     trainArray[0].released = true;
-    traindb.Insert(m['i'], trainArray[0]);
+    traindb.Insert(id, trainArray[0]);
+    for (int i = 0; i < trainArray[0].stationNum; ++i) stationAdd(trainArray[0].stations[i], trainArray[0]);
     return 0;
 }
 int query_train (string (&m)[256]) {

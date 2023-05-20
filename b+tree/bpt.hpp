@@ -22,7 +22,7 @@ class BPlusTree {
 private:
     using value = sjtu::pair<Key, T>; 
     enum TYPE {LEAF, NODE};
-    const static int M = 55;//(4096 - sizeof(bool) - sizeof(value) * 2 - sizeof(int) * 5) / (sizeof(int) + sizeof(value));
+    const static int M = 325;//(4096 - sizeof(bool) - sizeof(value) * 2 - sizeof(int) * 5) / (sizeof(int) + sizeof(value));
     const static int maxSize = M;
     const static int minSize = M / 2;
     class node {

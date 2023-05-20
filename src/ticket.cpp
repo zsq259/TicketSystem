@@ -14,6 +14,10 @@ void stationAdd(const my_string &a, const Train &b) {
     stationdb.Insert(a, b);
 }
 
+void stationDel(const my_string &a, const Train &b) {
+    stationdb.Delete(a, b);
+}
+
 void findPlace(int &st, int &ed, const Train &a, const my_string &S, const my_string &T) {
     for (int j = 0; j < a.stationNum; ++j) {
         if (a.stations[j] == S) st = j;
@@ -36,28 +40,66 @@ void sort(vector<int> &a, int l, int r, int *val) {
     sort(a, p1 + 1, r, val);
 }
 
+void printTravel(const Train &a, DateTime &O, const my_string &S, const my_string &T, 
+                 int st, int ed, int date, int price, int time) {
+    DateTrainSeat p;
+    int seatSum = 114514;
+    cout << a.id << ' ';
+    cout << S << ' ';
+    O.print();
+    cout << " -> ";
+    O += time;
+    cout << T << ' ';
+    O.print();
+    cout << ' ' << price << ' ';
+    
+    seats.read(a.place, date, p);
+    for (int j = st; j < ed; ++j) seatSum = std::min(seatSum, p[j]);
+    cout << seatSum << '\n';
+}
+
+bool checkTrain(const Train &a, int D, const my_string &S, const my_string &T, int st, int ed) {
+    if (!a.released) return false;
+    DateTime O(Date(D), Time(a.startTime));
+    int date = D;
+    if (st >= ed) return false;
+    for (int j = 0; j < st; ++j) O += a.stopoverTimes[j] + a.travelTimes[j];
+    date -= (int)O.date - date;
+    if (date < a.startSaleDate || date > a.endSaleDate) return false;
+    return true;
+}
+
 int query_ticket (string (&m)[256]) {
-    if (!m['p'].size()) m['p'] = "time";
-    int op = (m['p'] == "time");
-    stationdb.Find(m['s'], sArray);
-    stationdb.Find(m['t'], tArray);
+    int op = (!m['p'].size() || m['p'] == "time");
+    my_string S(m['s']), T(m['t']);
+    stationdb.Find(S, sArray);
+    stationdb.Find(T, tArray);
     int p1 = 0, p2 = 0, k1 = sArray.size(), k2 = tArray.size();
     v.clear();
     int tot = 0, date = Date(m['d']);
     
     while (p1 < k1 && p2 < k2) {
-        if (sArray[p1].id == tArray[p2].id) v.push_back(p1), ++tot, ++p1, ++p2;
+        if (sArray[p1].id == tArray[p2].id) {
+            int st = 0, ed = sArray[p1].stationNum;
+            findPlace(st, ed, sArray[p1], S, T);
+            if (!checkTrain(sArray[p1], Date(m['d']), S, T, st, ed)) { ++p1, ++p2; continue; }
+            v.push_back(p1), ++tot;
+            ++p1, ++p2;
+        }
         else if (sArray[p1].id < tArray[p2].id) ++p1;
         else ++p2;
     }
-    
+
+    tArray.clear();
+
+    //if (m[0] == "24127") std::cerr << "tot=" << tot << '\n';
     int *val = new int[tot], *price = new int[tot];
     
     
     for (int i = 0; i < tot; ++i) {
         int x = v[i]; val[i] = 0;
         int st = 0, ed = 0;
-        findPlace(st, ed, sArray[x], m['s'], m['t']);
+        findPlace(st, ed, sArray[x], S, T);
         
         for (int j = st; j < ed; ++j) {
             if (!op) val[i] += sArray[x].prices[j];
@@ -68,24 +110,11 @@ int query_ticket (string (&m)[256]) {
 
     sort(v, 0, tot, val);
     int *b = new int[tot];
-    int tt = tot;
-    for (int i = 0; i < tot; ++i) {
-        int x = v[i], st = 0, ed = 0;
-        DateTime O(Date(m['d']), Time(sArray[x].startTime));
-        date = Date(m['d']);
-        findPlace(st, ed, sArray[x], m['s'], m['t']);
-        for (int j = 0; j < st; ++j) O += sArray[x].stopoverTimes[j] + sArray[x].travelTimes[j];
-        date -= (int)O.date - date;
-
-        if (date < sArray[x].startSaleDate || date > sArray[x].endSaleDate) { --tt; continue; } 
-    }
-    cout << tt << '\n';
-    if (!tt) return 0;
-    DateTrainSeat p;
+    cout << tot << '\n';
     for (int i = 0; i < tot; ++i) {
         int x = v[i]; b[i] = 0;
-        int seatSum = 114514, st = 0, ed = 0, pri = 0;
-        findPlace(st, ed, sArray[x], m['s'], m['t']);
+        int st = 0, ed = 0;
+        findPlace(st, ed, sArray[x], S, T);
         for (int j = st; j < ed; ++j) {
             if (!op) b[i] += sArray[x].travelTimes[j];
             else b[i] += sArray[x].prices[j];
@@ -99,29 +128,113 @@ int query_ticket (string (&m)[256]) {
         int tmp = date;
         date -= (int)O.date - tmp;
 
-        if (date < sArray[x].startSaleDate || date > sArray[x].endSaleDate) continue;
+        //if (date < sArray[x].startSaleDate || date > sArray[x].endSaleDate) continue;
 
         O.date = m['d'];
 
-        cout << sArray[x].id << ' ';
-        cout << m['s'] << ' ';
-        O.print();
-        cout << " -> ";
-        if (!op) O += b[i], pri = val[i];
-        else O += val[i], pri = b[i];
-        cout << m['t'] << ' ';
-        O.print();
-        cout << ' ' << pri << ' ';
+        if(!op) printTravel(sArray[x], O, S, T, st, ed, date, val[i], b[i]);
+        else printTravel(sArray[x], O, S, T, st, ed, date, b[i], val[i]);
+
         
-        seats.read(sArray[x].place, date, p);
-        for (int j = st; j < ed; ++j) seatSum = std::min(seatSum, p[j]);
-        cout << seatSum << '\n';
     }
     delete []val; delete []price; delete []b;
+    sArray.clear(); v.clear();
     return 0;
 }
 
-int query_transfer (string (&m)[256]) { return 0; }
+bool cmp(int op, int p1, int p2, int bp, int bt, int i, int j, int pri, int ti) {
+    if (op) {
+        if (bt ^ ti) return ti < bt;
+        if (bp ^ pri) return pri < bp;
+    }
+    else {
+        if (bp ^ pri) return pri < bp;
+        if (bt ^ ti) return ti < bt;
+    }
+    if (sArray[p1].id != sArray[i].id) return sArray[i].id < sArray[p1].id;
+    return tArray[j].id < tArray[p2].id;
+}
+
+void showTravel(const Train &a, int date, const my_string &S, const my_string &T) { //date: start from first station
+    int st = 0, ed = 0;
+    findPlace(st, ed, a, S, T);
+    int price = 0, time = 0;
+    DateTime O(Date(date), Time(a.startTime));
+    for (int j = 0; j < st; ++j) O += a.stopoverTimes[j] + a.travelTimes[j];
+    for (int j = st; j < ed; ++j) time += a.travelTimes[j], price += a.prices[j];
+    for (int j = st; j < ed - 1; ++j) time += a.stopoverTimes[j];
+
+    printTravel(a, O, S, T, st, ed, date, price, time);
+
+}
+
+int query_transfer (string (&m)[256]) {
+    int op = (!m['p'].size() || m['p'] == "time");
+    int D = Date(m['d']), flag = 0;
+    my_string S(m['s']), T(m['t']);
+    stationdb.Find(S, sArray);
+    stationdb.Find(T, tArray);
+    
+    int k1 = sArray.size(), k2 = tArray.size();
+
+    if (!k1 || !k2) { cout << "0\n"; return 0; }
+    int p1 = 0, p2 = 0, bprice = 0, btime = 0, trans = 0, d1 = 0, d2 = 0;
+    for (int i = 0; i < k1; ++i) {
+        int s1 = 0, t1 = sArray[i].stationNum - 1;
+        findPlace(s1, t1, sArray[i], S, T);
+        if (!checkTrain(sArray[i], D, S, T, s1, t1)) continue;
+        DateTime O(Date(D), Time(sArray[i].startTime));
+        int date = D, time = 0, price = 0;
+        for (int j = 0; j < s1; ++j) O += sArray[i].travelTimes[j] + sArray[i].stopoverTimes[j];
+        date -= (int)O.date - date;
+        O.date = D;
+        DateTime SO = O; 
+        for (int j = s1 + 1; j <= t1; ++j) {
+            my_string R(sArray[i].stations[j]);
+            price += sArray[i].prices[j - 1];
+            
+            O += sArray[i].travelTimes[j - 1]; 
+            for (int k = 0; k < k2; ++k) {
+                if (sArray[i].id == tArray[k].id) continue;
+                int s2 = -1, t2 = tArray[k].stationNum - 1;
+                findPlace(s2, t2, tArray[k], R, T);
+                if (s2 == -1) continue;
+                int pri = price, da = O.date;
+                if (da < tArray[k].startSaleDate) {
+                    DateTime o(tArray[k].startSaleDate, tArray[k].startTime);
+                    for (int l = 0; l < s2; ++l) o += tArray[k].travelTimes[l] + tArray[k].stopoverTimes[l];
+                    da = o.date;
+                }
+                if (!checkTrain(tArray[k], da, R, T, s2, t2)) continue;
+                DateTime o(da, tArray[k].startTime);
+                for (int l = 0; l < s2; ++l) o += tArray[k].travelTimes[l] + tArray[k].stopoverTimes[l];
+                int tmp = da;
+                da -= o.date - da;
+                o.date = tmp;
+                if (o - O < 0) {
+                    ++da;
+                    o.date = o.date + 1;
+                }
+                for (int l = s2; l < t2; ++l) {
+                    pri += tArray[k].prices[l];
+                    o += tArray[k].travelTimes[l];
+                }
+                for (int l = s2; l < t2 - 1; ++l) o += tArray[k].stopoverTimes[l];
+                if (!p1 || cmp(op, p1, p2, bprice, btime, i, j, pri, o - O)) {
+                    p1 = i, p2 = k, flag = 1;
+                    trans = j;
+                    bprice = pri; btime = o - O;
+                    d1 = date; d2 = da;
+                }
+            }
+            O += sArray[i].stopoverTimes[j - 1];
+        }
+    }
+    if (!flag) { cout << "0\n"; return 0; }
+    showTravel(sArray[p1], d1, S, sArray[p1].stations[trans]);
+    showTravel(tArray[p2], d2, sArray[p1].stations[trans], T);
+    return 0;
+}
 
 void getTravel(const Train &a, DateTime &O, DateTime &o, 
               int &price, int &seat, int &date, int &num, int &st, int &ed, 
@@ -148,7 +261,7 @@ void getTravel(const Train &a, DateTime &O, DateTime &o,
 int buy_ticket (string (&m)[256]) {
     if (!isLogin(m['u'])) return -1;
     findTrain(m['i'], sArray);
-    
+    my_string T(m['t']);
     if (!sArray.size() || !sArray[0].released) return -1;
     
     DateTime O(Date(m['d']), Time(sArray[0].startTime));
@@ -158,13 +271,13 @@ int buy_ticket (string (&m)[256]) {
     
     //std::cerr << "objk\n";
     
-    getTravel(sArray[0], O, o, price, seat, date, num, st, ed, m['f'], m['t'], p);
+    getTravel(sArray[0], O, o, price, seat, date, num, st, ed, m['f'], T, p);
     
     if (date < sArray[0].startSaleDate || date > sArray[0].endSaleDate) return -1;
     
 
     if (seat >= num) {
-        Order a("[success]", m['i'], m['u'], m['f'], m['t'], stoi(m[0]), date, O.date, O.time, o.date, o.time, price, num);
+        Order a("[success]", m['i'], m['u'], m['f'], T, stoi(m[0]), date, O.date, O.time, o.date, o.time, price, num);
         for (int i = st; i < ed; ++i) p[i] -= num;
         seats.write(sArray[0].place, date, p);
         orderdb.Insert(m['u'], a);
@@ -172,7 +285,7 @@ int buy_ticket (string (&m)[256]) {
     }
     else {
         if (!m['q'].size() || m['q'] == "false") return -1;
-        Order a("[pending]", m['i'], m['u'], m['f'], m['t'], stoi(m[0]), date, O.date, O.time, o.date, o.time, price, num);
+        Order a("[pending]", m['i'], m['u'], m['f'], T, stoi(m[0]), date, O.date, O.time, o.date, o.time, price, num);
         waitdb.Insert(a.id, a);
         orderdb.Insert(a.userid, a);
         cout << "queue\n";
@@ -208,6 +321,7 @@ void checkWait() {
         waitArray[i].statue = "[success]";
         orderdb.Insert(waitArray[i].userid, waitArray[i]);        
     }
+    waitArray.clear();
 }
 
 int refund_ticket (string (&m)[256]) { 
@@ -220,12 +334,12 @@ int refund_ticket (string (&m)[256]) {
     orderdb.Delete(id, orderArray[n]);
     if (orderArray[n].statue.key[1] == 's') {
         DateTrainSeat p;
-        findTrain(orderArray[0].trainid, sArray);
+        findTrain(orderArray[n].trainid, sArray);
         seats.read(sArray[0].place, orderArray[n].date, p);
         int st = 0, ed = 0;
         findPlace(st, ed, sArray[0], orderArray[n].from, orderArray[n].to);
         for (int i = st; i < ed; ++i) p[i] += orderArray[n].num;
-        seats.write(sArray[0].place, orderArray[0].date, p);
+        seats.write(sArray[0].place, orderArray[n].date, p);
         checkWait();
     }
     else if (orderArray[n].statue.key[1] == 'p') {
