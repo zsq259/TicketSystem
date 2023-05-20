@@ -2,13 +2,30 @@
 #include "train.h"
 #include "user.h"
 
-BPlusTree<my_string, Train> stationdb("station.db", "station.bin");
-BPlusTree<my_string, Order> orderdb("order.db", "order.bin");
-BPlusTree<int, Order> waitdb("wait.db", "wait.bin");
+BPlusTree<my_string, Train> stationdb("station.db", "station_bin.db");
+BPlusTree<my_string, Order> orderdb("order.db", "order_bin.db");
+BPlusTree<int, Order> waitdb("wait.db", "wait_bin.db");
 vector<Train> sArray, tArray;
 vector<int> v;
 vector<Order> orderArray, waitArray;
 static SeatFile seats("seat.db");
+
+void cleanTicket() {
+    (&stationdb)->~BPlusTree<my_string, Train>();
+    std::filesystem::remove("station.db");
+    std::filesystem::remove("station_bin.db");
+    new (&stationdb) BPlusTree<my_string, Train>("station.db", "station_bin.db");
+
+    (&orderdb)->~BPlusTree<my_string, Order>();
+    std::filesystem::remove("order.db");
+    std::filesystem::remove("order_bin.db");
+    new (&orderdb) BPlusTree<my_string, Order>("order.db", "order_bin.db");
+
+    (&waitdb)->~BPlusTree<int, Order>();
+    std::filesystem::remove("wait.db");
+    std::filesystem::remove("wait_bin.db");
+    new (&waitdb) BPlusTree<int, Order>("wait.db", "wait_bin.db");
+}
 
 void stationAdd(const my_string &a, const Train &b) {
     stationdb.Insert(a, b);

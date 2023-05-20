@@ -2,6 +2,7 @@
 #define TICKET_SYSTEM_USER_H
 #include <cstring>
 #include <iostream>
+#include <filesystem>
 #include "../b+tree/bpt.hpp"
 #include "../STLite/map.hpp"
 using std::cout;
@@ -47,6 +48,7 @@ public:
     } 
 };
 
+void cleanUser();
 bool isLogin(const my_string &id);
 
 int add_user (string (&m)[256]);

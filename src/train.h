@@ -200,6 +200,7 @@ class SeatFile {
     }
 };
 
+void cleanTrain();
 void findTrain(const my_string &a, vector<Train> &v);
 
 int add_train (string (&m)[256]);

@@ -2,7 +2,12 @@
 using sjtu::map;
 using sjtu::pair;
 
-int clean (string (&m)[256]) { puts("15"); }
+int clean (string (&m)[256]) {
+    cleanUser();
+    cleanTrain();
+    cleanTicket();
+    return 0;
+}
 
 const int N = 100005;
 int ch[N][27], tot = 0, ed[N];
@@ -16,7 +21,7 @@ int (*func[15])(string (&m)[256]) = { add_user, login, logout, query_profile, mo
                                            add_train, delete_train, release_train, query_train, 
                                            query_ticket, query_transfer, buy_ticket, query_order, 
                                            refund_ticket, clean };
-int out[15] = {1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0};
+int out[15] = {1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1};
 
 inline int num(char c) { return c == '_'? 26: c - 'a'; }
 

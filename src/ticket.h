@@ -31,6 +31,7 @@ class Order{
     bool operator != (const Order &other) const { return id != other.id; }
 }; 
 
+void cleanTicket();
 void stationAdd(const my_string &a, const Train &b);
 void stationDel(const my_string &a, const Train &b);
 

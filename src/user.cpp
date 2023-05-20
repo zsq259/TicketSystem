@@ -4,6 +4,13 @@ BPlusTree<my_string, User> userdb("user.db", "user_bin.db");
 sjtu::map<my_string, bool> user_login;
 vector<User> array;
 
+void cleanUser() {
+    (&userdb)->~BPlusTree<my_string, User>();
+    std::filesystem::remove("user.db");
+    std::filesystem::remove("user_bin.db");
+    new (&userdb) BPlusTree<my_string, User>("user.db", "user_bin.db");
+}
+
 bool isLogin(const my_string &id) { return user_login.find(id) != user_login.end() && user_login[id]; }
 
 int add_user (string (&m)[256]) {

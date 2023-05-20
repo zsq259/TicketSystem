@@ -1,10 +1,18 @@
 #include "train.h"
 #include "ticket.h"
+#include <filesystem>
 
-BPlusTree<my_string, Train> traindb("train.db", "train.bin");
+BPlusTree<my_string, Train> traindb("train.db", "train_bin.db");
 vector<Train> trainArray;
 static SeatFile seats("seat.db");
 int SeatFile::sum = 0;
+
+void cleanTrain() {
+    (&traindb)->~BPlusTree<my_string, Train>();
+    std::filesystem::remove("train.db");
+    std::filesystem::remove("train_bin.db");
+    new (&traindb) BPlusTree<my_string, Train>("train.db", "train_bin.db");
+}
 
 void findTrain(const my_string &a, vector<Train> &v) {
     traindb.Find(a, v);
