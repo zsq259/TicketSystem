@@ -210,7 +210,7 @@ int query_transfer (string (&m)[256]) {
     int k1 = sArray.size(), k2 = tArray.size();
     
     if (!k1 || !k2) { cout << "0\n"; return 0; }
-    int p1 = 0, p2 = 0, bprice = 0, btime = 0, trans = 0, d1 = 0, d2 = 0;
+    int p1 = -1, p2 = -1, bprice = 0, btime = 0, trans = 0, d1 = 0, d2 = 0;
     for (int i = 0; i < k1; ++i) {
         int s1 = 0, t1 = sArray[i].stationNum - 1;
         findPlace(s1, t1, sArray[i], S, T);
@@ -251,10 +251,10 @@ int query_transfer (string (&m)[256]) {
                     o += tArray[k].travelTimes[l];
                 }
                 for (int l = s2; l < t2 - 1; ++l) o += tArray[k].stopoverTimes[l];
-                if (!p1 || cmp(op, p1, p2, bprice, btime, i, j, pri, o - O)) {
+                if (p1 == -1 || cmp(op, p1, p2, bprice, btime, i, j, pri, o - SO)) {
                     p1 = i, p2 = k, flag = 1;
                     trans = j;
-                    bprice = pri; btime = o - O;
+                    bprice = pri; btime = o - SO;
                     d1 = date; d2 = da;
                 }
             }
