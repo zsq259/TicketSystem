@@ -56,6 +56,7 @@ bool find() {
     cout << s[0] << ' ';
     if (ed[p] < 15) {
         m[0] = s[0].substr(1, s[0].size() - 2);
+        //std::cerr << s[0] << ' ' << s[1] << '\n';
         //if (m[0] == "1097") while(1);
     
         int op = func[ed[p]](m);

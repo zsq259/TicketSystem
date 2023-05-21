@@ -48,15 +48,19 @@ bool findPlace(int &st, int &ed, const Train &a, const my_string &S, const my_st
     return cnt == 2;
 }
 
+bool compare(vector<int> &a, int *val, int p, int ret, const my_string &tmp) {
+    return val[p] > ret || (val[p] == ret && sArray[a[p]].id > tmp);
+}
+
 void sort(vector<int> &a, int l, int r, int *val) {
-    int n = r - l;
-    if (n <= 1) return ;
+    if (r - l <= 1) return ;
     int p1 = l, p2 = r - 1;
     int ret = val[l];
+    my_string tmp = sArray[a[l]].id;
     while (p1 < p2) {
-        while (p2 > p1 && val[p2] > ret) --p2;
+        while (p2 > p1 && compare(a, val, p2, ret, tmp)) --p2;
         std::swap(a[p1], a[p2]), std::swap(val[p1], val[p2]);
-        while (p1 < p2 && val[p1] < ret) ++p1;
+        while (p1 < p2 && !compare(a, val, p1, ret, tmp)) ++p1;
         std::swap(a[p1], a[p2]), std::swap(val[p1], val[p2]);
     }
     sort(a, l, p1, val);
@@ -95,7 +99,7 @@ int query_ticket (string (&m)[256]) {
     int op = (!m['p'].size() || m['p'] == "time");
     my_string S(m['s']), T(m['t']);
     stationdb.Find(S, sArray);
-    stationdb.Find(T, tArray);
+    stationdb.Find(T, tArray);    
     int p1 = 0, p2 = 0, k1 = sArray.size(), k2 = tArray.size();
     v.clear();
     int tot = 0, date = Date(m['d']);
@@ -112,11 +116,11 @@ int query_ticket (string (&m)[256]) {
         else ++p2;
     }
 
+    
     tArray.clear();
 
     //if (m[0] == "24127") std::cerr << "tot=" << tot << '\n';
     int *val = new int[tot], *price = new int[tot];
-    
     
     for (int i = 0; i < tot; ++i) {
         int x = v[i]; val[i] = 0;
@@ -131,6 +135,7 @@ int query_ticket (string (&m)[256]) {
     }
 
     sort(v, 0, tot, val);
+
     int *b = new int[tot];
     cout << tot << '\n';
     for (int i = 0; i < tot; ++i) {
@@ -158,6 +163,7 @@ int query_ticket (string (&m)[256]) {
 
         
     }
+    
     delete []val; delete []price; delete []b;
     sArray.clear(); v.clear();
 
@@ -191,15 +197,17 @@ void showTravel(const Train &a, int date, const my_string &S, const my_string &T
 }
 
 int query_transfer (string (&m)[256]) {
+    //return 0;
+    
     int op = (!m['p'].size() || m['p'] == "time");
     int D = Date(m['d']), flag = 0;
     my_string S(m['s']), T(m['t']);
+    
+    if (m[0] == "216338") std::cerr << "ojbk\n";
     stationdb.Find(S, sArray);
-    //if (m[0] == "216338") { cout << "0\n"; return 0; } 
+    if (m[0] == "216338") std::cerr << "ojbk\n";
     stationdb.Find(T, tArray);
     int k1 = sArray.size(), k2 = tArray.size();
-
-    if (m[0] == "29538") std::cerr << "k1=" << k1 << ' ' << k2 << '\n';
     
     if (!k1 || !k2) { cout << "0\n"; return 0; }
     int p1 = 0, p2 = 0, bprice = 0, btime = 0, trans = 0, d1 = 0, d2 = 0;

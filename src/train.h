@@ -98,10 +98,14 @@ class Train {
         stationNum(other.stationNum), seatNum(other.seatNum), 
         startTime(other.startTime), type(other.type), 
         startSaleDate(other.startSaleDate), endSaleDate(other.endSaleDate) {
-        for (int i = 0; i < stationNum; ++i) stations[i] = other.stations[i];
-        memcpy(prices, other.prices, sizeof(int) * stationNum);
-        memcpy(travelTimes, other.travelTimes, sizeof(int) * stationNum);
-        memcpy(stopoverTimes, other.stopoverTimes, sizeof(int) * stationNum);
+        //for (int i = 0; i < stationNum; ++i) stations[i] = other.stations[i];
+        memcpy(stations, other.stations, sizeof(stations));
+        memcpy(prices, other.prices, sizeof(prices));
+        memcpy(travelTimes, other.travelTimes, sizeof(travelTimes));
+        memcpy(stopoverTimes, other.stopoverTimes, sizeof(stopoverTimes));
+        // memcpy(prices, other.prices, sizeof(int) * stationNum);
+        // memcpy(travelTimes, other.travelTimes, sizeof(int) * stationNum);
+        // memcpy(stopoverTimes, other.stopoverTimes, sizeof(int) * stationNum);
     }
     Train &operator = (const Train &other) {
         if (&other == this) return *this;
@@ -109,10 +113,14 @@ class Train {
         stationNum = other.stationNum; seatNum = other.seatNum; 
         startTime = other.startTime; type = other.type; 
         startSaleDate = other.startSaleDate; endSaleDate = other.endSaleDate;
-        for (int i = 0; i < stationNum; ++i) stations[i] = other.stations[i];
-        memcpy(prices, other.prices, sizeof(int) * stationNum);
-        memcpy(travelTimes, other.travelTimes, sizeof(int) * stationNum);
-        memcpy(stopoverTimes, other.stopoverTimes, sizeof(int) * stationNum);
+        //for (int i = 0; i < stationNum; ++i) stations[i] = other.stations[i];
+        memcpy(stations, other.stations, sizeof(stations));
+        memcpy(prices, other.prices, sizeof(prices));
+        memcpy(travelTimes, other.travelTimes, sizeof(travelTimes));
+        memcpy(stopoverTimes, other.stopoverTimes, sizeof(stopoverTimes));
+        // memcpy(prices, other.prices, sizeof(int) * stationNum);
+        // memcpy(travelTimes, other.travelTimes, sizeof(int) * stationNum);
+        // memcpy(stopoverTimes, other.stopoverTimes, sizeof(int) * stationNum);
         return *this;
     }
     bool operator <  (const Train &other) const { return id <  other.id; }
