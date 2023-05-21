@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cstdio>
 #include <cstring>
-#include "../b+tree/bpt.hpp"
 #include "../STLite/map.hpp"
 #include "parser.h"
 #include "user.h"
@@ -16,12 +15,15 @@ int main() {
     init();
     while(1) {
         //str.clear();
-        //puts("ok");
+        //std::cerr << "ok\n";
         if (!cin.getline(str, 4000)) break;
         //puts("ok1");
         //std::cout << str << '\n';
         cut(str);
+        
         if (!find()) break;
+        
+        //std::cerr << "ok1\n";
     }
     return 0;
 }

@@ -25,6 +25,10 @@ void cleanTicket() {
     std::filesystem::remove("wait.db");
     std::filesystem::remove("wait_bin.db");
     new (&waitdb) BPlusTree<int, Order>("wait.db", "wait_bin.db");
+
+    (&seats)->~SeatFile();
+    std::filesystem::remove("seat.db");
+    new (&seats) SeatFile("seat.db");
 }
 
 void stationAdd(const my_string &a, const Train &b) {
@@ -35,11 +39,13 @@ void stationDel(const my_string &a, const Train &b) {
     stationdb.Delete(a, b);
 }
 
-void findPlace(int &st, int &ed, const Train &a, const my_string &S, const my_string &T) {
+bool findPlace(int &st, int &ed, const Train &a, const my_string &S, const my_string &T) {
+    int cnt = 0;
     for (int j = 0; j < a.stationNum; ++j) {
-        if (a.stations[j] == S) st = j;
-        if (a.stations[j] == T) ed = j;
+        if (a.stations[j] == S) st = j, ++cnt;
+        if (a.stations[j] == T) ed = j, ++cnt;
     }
+    return cnt == 2;
 }
 
 void sort(vector<int> &a, int l, int r, int *val) {
@@ -69,7 +75,6 @@ void printTravel(const Train &a, DateTime &O, const my_string &S, const my_strin
     cout << T << ' ';
     O.print();
     cout << ' ' << price << ' ';
-    
     seats.read(a.place, date, p);
     for (int j = st; j < ed; ++j) seatSum = std::min(seatSum, p[j]);
     cout << seatSum << '\n';
@@ -77,9 +82,9 @@ void printTravel(const Train &a, DateTime &O, const my_string &S, const my_strin
 
 bool checkTrain(const Train &a, int D, const my_string &S, const my_string &T, int st, int ed) {
     if (!a.released) return false;
+    if (st >= ed) return false;
     DateTime O(Date(D), Time(a.startTime));
     int date = D;
-    if (st >= ed) return false;
     for (int j = 0; j < st; ++j) O += a.stopoverTimes[j] + a.travelTimes[j];
     date -= (int)O.date - date;
     if (date < a.startSaleDate || date > a.endSaleDate) return false;
@@ -98,7 +103,7 @@ int query_ticket (string (&m)[256]) {
     while (p1 < k1 && p2 < k2) {
         if (sArray[p1].id == tArray[p2].id) {
             int st = 0, ed = sArray[p1].stationNum;
-            findPlace(st, ed, sArray[p1], S, T);
+            if (!findPlace(st, ed, sArray[p1], S, T)) { ++p1, ++p2; continue; }
             if (!checkTrain(sArray[p1], Date(m['d']), S, T, st, ed)) { ++p1, ++p2; continue; }
             v.push_back(p1), ++tot;
             ++p1, ++p2;
@@ -116,7 +121,7 @@ int query_ticket (string (&m)[256]) {
     for (int i = 0; i < tot; ++i) {
         int x = v[i]; val[i] = 0;
         int st = 0, ed = 0;
-        findPlace(st, ed, sArray[x], S, T);
+        if (!findPlace(st, ed, sArray[x], S, T)) std::cerr << "-----------------------\n";
         
         for (int j = st; j < ed; ++j) {
             if (!op) val[i] += sArray[x].prices[j];
@@ -148,7 +153,6 @@ int query_ticket (string (&m)[256]) {
         //if (date < sArray[x].startSaleDate || date > sArray[x].endSaleDate) continue;
 
         O.date = m['d'];
-
         if(!op) printTravel(sArray[x], O, S, T, st, ed, date, val[i], b[i]);
         else printTravel(sArray[x], O, S, T, st, ed, date, b[i], val[i]);
 
@@ -156,6 +160,7 @@ int query_ticket (string (&m)[256]) {
     }
     delete []val; delete []price; delete []b;
     sArray.clear(); v.clear();
+
     return 0;
 }
 
@@ -190,10 +195,12 @@ int query_transfer (string (&m)[256]) {
     int D = Date(m['d']), flag = 0;
     my_string S(m['s']), T(m['t']);
     stationdb.Find(S, sArray);
+    //if (m[0] == "216338") { cout << "0\n"; return 0; } 
     stationdb.Find(T, tArray);
-    
     int k1 = sArray.size(), k2 = tArray.size();
 
+    if (m[0] == "29538") std::cerr << "k1=" << k1 << ' ' << k2 << '\n';
+    
     if (!k1 || !k2) { cout << "0\n"; return 0; }
     int p1 = 0, p2 = 0, bprice = 0, btime = 0, trans = 0, d1 = 0, d2 = 0;
     for (int i = 0; i < k1; ++i) {
@@ -214,8 +221,7 @@ int query_transfer (string (&m)[256]) {
             for (int k = 0; k < k2; ++k) {
                 if (sArray[i].id == tArray[k].id) continue;
                 int s2 = -1, t2 = tArray[k].stationNum - 1;
-                findPlace(s2, t2, tArray[k], R, T);
-                if (s2 == -1) continue;
+                if (!findPlace(s2, t2, tArray[k], R, T)) continue;
                 int pri = price, da = O.date;
                 if (da < tArray[k].startSaleDate) {
                     DateTime o(tArray[k].startSaleDate, tArray[k].startTime);
@@ -256,7 +262,6 @@ int query_transfer (string (&m)[256]) {
 void getTravel(const Train &a, DateTime &O, DateTime &o, 
               int &price, int &seat, int &date, int &num, int &st, int &ed, 
               const my_string &S, const my_string &T, DateTrainSeat &p) {
-    findPlace(st, ed, a, S, T);
     
     for (int j = 0; j < st; ++j) O += a.stopoverTimes[j] + a.travelTimes[j];
     int tmp = date;
@@ -266,7 +271,7 @@ void getTravel(const Train &a, DateTime &O, DateTime &o,
     
     for (int i = st; i < ed; ++i) o += a.travelTimes[i];
     for (int i = st; i < ed - 1; ++i) o += a.stopoverTimes[i];
-
+    
     seats.read(a.place, date, p);
 
     for (int i = st; i < ed; ++i) {
@@ -276,25 +281,23 @@ void getTravel(const Train &a, DateTime &O, DateTime &o,
 }
 
 int buy_ticket (string (&m)[256]) {
+
     if (!isLogin(m['u'])) return -1;
     findTrain(m['i'], sArray);
-    my_string T(m['t']);
+    my_string S(m['f']), T(m['t']);
     if (!sArray.size() || !sArray[0].released) return -1;
     
     DateTime O(Date(m['d']), Time(sArray[0].startTime));
     DateTime o;
-    int st = 0, ed =0, price = 0, seat = 114514, date = Date(m['d']), num = stoi(m['n']);
+    int st = -1, ed = -1, price = 0, seat = 114514, date = Date(m['d']), num = stoi(m['n']);
     DateTrainSeat p;
-    
-    //std::cerr << "objk\n";
-    
-    getTravel(sArray[0], O, o, price, seat, date, num, st, ed, m['f'], T, p);
-    
-    if (date < sArray[0].startSaleDate || date > sArray[0].endSaleDate) return -1;
+    if (!findPlace(st, ed, sArray[0], S, T)) return -1;
+    if (!checkTrain(sArray[0], Date(m['d']), S, T, st, ed)) return -1;
+    getTravel(sArray[0], O, o, price, seat, date, num, st, ed, S, T, p);
     
 
     if (seat >= num) {
-        Order a("[success]", m['i'], m['u'], m['f'], T, stoi(m[0]), date, O.date, O.time, o.date, o.time, price, num);
+        Order a("[success]", m['i'], m['u'], S, T, stoi(m[0]), date, O.date, O.time, o.date, o.time, price, num);
         for (int i = st; i < ed; ++i) p[i] -= num;
         seats.write(sArray[0].place, date, p);
         orderdb.Insert(m['u'], a);
@@ -302,7 +305,7 @@ int buy_ticket (string (&m)[256]) {
     }
     else {
         if (!m['q'].size() || m['q'] == "false") return -1;
-        Order a("[pending]", m['i'], m['u'], m['f'], T, stoi(m[0]), date, O.date, O.time, o.date, o.time, price, num);
+        Order a("[pending]", m['i'], m['u'], S, T, stoi(m[0]), date, O.date, O.time, o.date, o.time, price, num);
         waitdb.Insert(a.id, a);
         orderdb.Insert(a.userid, a);
         cout << "queue\n";
@@ -311,11 +314,13 @@ int buy_ticket (string (&m)[256]) {
 }
 
 int query_order (string (&m)[256]) {
+
     my_string id(m['u']);
     if (!isLogin(id)) return -1;
     orderdb.Find(id, orderArray);
     cout << orderArray.size() << '\n';
     for (int i = orderArray.size() - 1; i >= 0; --i) orderArray[i].print();
+
     return 0;
 }
 
@@ -327,7 +332,10 @@ void checkWait() {
         findTrain(waitArray[i].trainid, sArray);
         DateTime O(Date(waitArray[i].sDate), Time(sArray[0].startTime));
         DateTime o;
+        st = 0, ed = -1;
         int price = 0, seat = 114514, date = Date(waitArray[i].sDate), num = waitArray[i].num;
+        if (!findPlace(st, ed, sArray[0], waitArray[i].from, waitArray[i].to)) continue;
+        if (ed < st) continue;
         getTravel(sArray[0], O, o, price, seat, date, num, st, ed, waitArray[i].from, waitArray[i].to, p);
         if (date < sArray[0].startSaleDate || date > sArray[0].endSaleDate) continue;
         if (seat < num) continue;
@@ -335,7 +343,8 @@ void checkWait() {
         seats.write(sArray[0].place, date, p);
         waitdb.Delete(waitArray[i].id, waitArray[i]);
         orderdb.Delete(waitArray[i].userid, waitArray[i]);
-        waitArray[i].statue = "[success]";
+        string str = "[success]";
+        waitArray[i].statue = str;
         orderdb.Insert(waitArray[i].userid, waitArray[i]);        
     }
     waitArray.clear();
@@ -364,7 +373,8 @@ int refund_ticket (string (&m)[256]) {
         waitdb.Delete(orderArray[n].id, waitArray[0]);
     }
     else return 0;
-    orderArray[n].statue = "[refunded]";
-    orderdb.Insert(id, orderArray[n]);
+    string str = "[refunded]";
+    orderArray[n].statue = str;
+    orderdb.Insert(id, orderArray[n]);    
     return 0;
 }

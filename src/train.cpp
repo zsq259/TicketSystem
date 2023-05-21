@@ -5,13 +5,17 @@
 BPlusTree<my_string, Train> traindb("train.db", "train_bin.db");
 vector<Train> trainArray;
 static SeatFile seats("seat.db");
-int SeatFile::sum = 0;
+int SeatFile::sum;
 
 void cleanTrain() {
     (&traindb)->~BPlusTree<my_string, Train>();
     std::filesystem::remove("train.db");
     std::filesystem::remove("train_bin.db");
     new (&traindb) BPlusTree<my_string, Train>("train.db", "train_bin.db");
+
+    (&seats)->~SeatFile();
+    std::filesystem::remove("seat.db");
+    new (&seats) SeatFile("seat.db");
 }
 
 void findTrain(const my_string &a, vector<Train> &v) {
@@ -20,6 +24,7 @@ void findTrain(const my_string &a, vector<Train> &v) {
 
 int add_train (string (&m)[256]) {
     
+
     traindb.Find(m['i'], trainArray);
     if (trainArray.size()) return -1;
     
@@ -31,6 +36,7 @@ int add_train (string (&m)[256]) {
     a.type = m['y'][0];
     int tot = 0;
     string str;
+
     for (int i = 0, k = m['s'].size(); i < k; ++i) {
         if (m['s'][i] == '|') a.stations[tot] = str, ++tot, str.clear();
         else str += m['s'][i];
@@ -64,28 +70,31 @@ int add_train (string (&m)[256]) {
     }
 
     a.endSaleDate = Date(str);
+    
+    
+    
     for (int i = 0; i < a.stationNum; ++i) {
-        //if (m['i'] == "TOTHEEOLDCAUSE") std::cerr << "i= " << i << ' ' << a.stations[i] << '\n';
         stationAdd(a.stations[i], a);
     }
-
     traindb.Insert(a.id, a);
-
-    
 
     DateTrainSeat p;
     for (int i = 0; i < a.stationNum; ++i) p[i] = a.seatNum;
     TrainSeat P;
     for (int i = Date("06-01"), k = Date("08-31"); i <= k; ++i) P[i] = p;
+
     seats.write(a.place, P);
     return 0;
 }
 
 int delete_train (string (&m)[256]) { 
+    
     traindb.Find(m['i'], trainArray);
+    //return 0;
+    
     if (!trainArray.size()) return -1;
     if (trainArray[0].released) return -1;
-    traindb.Delete(m['i'], Train(m['i']));
+    traindb.Delete(m['i'], trainArray[0]);
     for (int i = 0; i < trainArray[0].stationNum; ++i) {
         stationDel(trainArray[0].stations[i], trainArray[0]);
     }
@@ -93,7 +102,7 @@ int delete_train (string (&m)[256]) {
     return 0;
 }
 int release_train (string (&m)[256]) {
-    
+
     my_string id(m['i']);
     traindb.Find(id, trainArray);
     if (!trainArray.size()) return -1;
@@ -109,6 +118,9 @@ int release_train (string (&m)[256]) {
     return 0;
 }
 int query_train (string (&m)[256]) {
+
+    //return 0;
+
     traindb.Find(m['i'], trainArray);
     if (!trainArray.size()) return -1;
     int day = Date(m['d']);

@@ -3,8 +3,15 @@
 #include <cstring>
 #include <iostream>
 #include <filesystem>
+#define USE_KUPI_BPT
+#ifdef USE_KUPI_BPT
+#include "../b+tree/kp_bpt.hpp"
+#else
 #include "../b+tree/bpt.hpp"
+#endif
 #include "../STLite/map.hpp"
+#include "../STLite/vector.hpp"
+using sjtu::vector;
 using std::cout;
 using std::string;
 using sjtu::my_string;
@@ -19,7 +26,7 @@ public:
     User():username(""), password(""), name(""), mailAddr(""), privilege(0) {}
     explicit User(const string &un_, const string &pw_, const string &n_, const string &m_, const string &p_):
         username(un_), password(pw_), name(n_), mailAddr(m_), privilege(stoi(p_)) {}
-    explicit User(const User &other): 
+    User(const User &other): 
         username(other.username), password(other.password), name(other.name), mailAddr(other.mailAddr), privilege(other.privilege) {}
     User &operator = (const User &other) {
         if (&other == this) return *this;

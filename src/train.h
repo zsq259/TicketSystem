@@ -6,6 +6,7 @@
 #include "../STLite/map.hpp"
 #include "user.h"
 using namespace sjtu;
+using std::fstream;
 
 class Date {
     public:
@@ -92,9 +93,7 @@ class Train {
     bool released = false;
     int place;
     Train() {}
-    Train(string id_):id(id_) {}
-    Train(my_string id_):id(id_) {}
-    explicit Train(const Train &other): 
+    Train(const Train &other): 
         id(other.id), released(other.released), place(other.place),  
         stationNum(other.stationNum), seatNum(other.seatNum), 
         startTime(other.startTime), type(other.type), 
@@ -145,7 +144,7 @@ class DateTrainSeat {
 class TrainSeat {
     private:
     static const int S = 96;
-    DateTrainSeat s[S];
+    DateTrainSeat s[S] = {};
     public:
     TrainSeat() = default;
     DateTrainSeat &operator[] (int x) { return s[x]; }
@@ -183,7 +182,7 @@ class SeatFile {
         io.write(reinterpret_cast<const char *>(&sum), sizeof(int));
     }
     void read(int place, int date, DateTrainSeat &a) {
-        io.seekg(sizeof(int) + (place - 1) * sizeof(TrainSeat) + (date - 1) * sizeof(DateTrainSeat));
+        io.seekg(sizeof(int) + (place - 1) * sizeof(TrainSeat) + (date) * sizeof(DateTrainSeat));
         io.read(reinterpret_cast<char *>(&a), sizeof(a));
     }
     void read(int place, TrainSeat &a) {
@@ -191,7 +190,7 @@ class SeatFile {
         io.read(reinterpret_cast<char *>(&a), sizeof(a));
     }
     void write(int place, int date, const DateTrainSeat &a) {
-        io.seekp(sizeof(int) + (place - 1) * sizeof(TrainSeat) + (date - 1) * sizeof(DateTrainSeat));
+        io.seekp(sizeof(int) + (place - 1) * sizeof(TrainSeat) + (date) * sizeof(DateTrainSeat));
         io.write(reinterpret_cast<const char *>(&a), sizeof(a));
     }
     void write(int place, const TrainSeat &a) {

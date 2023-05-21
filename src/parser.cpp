@@ -1,6 +1,4 @@
 #include "parser.h"
-using sjtu::map;
-using sjtu::pair;
 
 int clean (string (&m)[256]) {
     cleanUser();
@@ -58,6 +56,8 @@ bool find() {
     cout << s[0] << ' ';
     if (ed[p] < 15) {
         m[0] = s[0].substr(1, s[0].size() - 2);
+        //if (m[0] == "1097") while(1);
+    
         int op = func[ed[p]](m);
         if (op != 0 || out[ed[p]]) cout << op << '\n';
         return true; 

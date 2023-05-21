@@ -64,7 +64,7 @@ int modify_profile (string (&m)[256]) {
     if (array.empty()) { return -1; }
     if (array[0].privilege < now.privilege || (array[0].privilege == now.privilege && array[0] != now)) { return -1; }
     if (!m['g'].empty() && array[0].privilege <= stod(m['g'])) { return -1; }
-    if (!userdb.Delete(id, now)) puts("sbhastinmydd");
+    userdb.Delete(id, now);
     // o(m[]):string -> my_string
     if (!m['g'].empty()) now.privilege = stod(m['g']);
     if (!m['p'].empty()) now.changeP(m['p']);

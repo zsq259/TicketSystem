@@ -172,6 +172,7 @@ public:
     void insert(node &a, const value &val) {
         int o = Search(a, val);
         for (int i = a.sum; i > o; --i) std::swap(a.keys[i], a.keys[i - 1]);
+        //for (int i = a.sum; i > o; --i) a.keys[i] = a.keys[i - 1];
         a.keys[o] = val;
         ++a.sum;
     }
@@ -312,7 +313,7 @@ public:
     }
     void Insert(const Key &key, const T &v) {
         node a;
-        value val = value(key, v);
+        value val(key, v);
         if (!root) {
             root = newNode(a);
             a.place = root;

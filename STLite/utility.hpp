@@ -44,16 +44,13 @@ std::ostream &operator <<(std::ostream &os, const pair<T1, T2> &a) {
 
 class my_string{
 public:
-    char key[33];
-    my_string() {strcpy(key, ""); }
+    char key[42] = {};
+    my_string() {memset(key, 0, sizeof(key)); }
     my_string(const char key_[]) { strcpy(key, key_); }
-	my_string(const string &s) { strcpy(key, s.data()); }
+	my_string(const string &s) { strcpy(key, s.c_str()); }
     my_string(const my_string &other) { strcpy(key, other.key); }
-    my_string operator = (const my_string &other) { 
-        if (&other == this) return *this; 
-        strcpy(key, other.key); 
-        return *this;    
-    }
+    my_string &operator= (const my_string &other) { strcpy(key, other.key); return *this; }
+	my_string &operator= (const string &s) { strcpy(key, s.c_str()); return *this; }
 	my_string &operator + (const my_string &other) { strcat(key, other.key); return *this; }
 	operator string() { return string(key); }
     bool operator <  (const my_string &other) const { return strcmp(key, other.key) <  0; }
