@@ -9,7 +9,6 @@ extern BPlusTree<my_string, int> traindb;
 vector<TrainStation> sArray, tArray;
 vector<pair<int, int> > v;
 vector<Order> orderArray, waitArray;
-extern vector<int> placeArray;
 extern SeatFile seats;
 extern TrainFile trains;
 
@@ -161,9 +160,10 @@ int query_transfer (string (&m)[256]) {
     Travel bS, bT;
     my_string trans;
     for (int i = 0; i < k1; ++i) {
-        traindb.Find(sArray[i].id, placeArray);
+        int pla = 0;;
+        traindb.Find(sArray[i].id, pla);
         Train A;
-        trains.read(placeArray[0], A);
+        trains.read(pla, A);
         int s1 = sArray[i].kth, t1 = A.stationNum - 1;
         DateTime O(D, A.startTime);
         O += (sArray[i].arrivetime + sArray[i].stoptime);
@@ -174,9 +174,9 @@ int query_transfer (string (&m)[256]) {
         DateTime SO = O; // get on train A
         for (int k = 0; k < k2; ++k) {
             if (tArray[k].id == A.id) continue;
-            traindb.Find(tArray[k].id, placeArray);
+            traindb.Find(tArray[k].id, pla);
             Train B;
-            trains.read(placeArray[0], B);
+            trains.read(pla, B);
             for (int j = s1 + 1; j <= t1; ++j) {
                 my_string R(A.stations[j]);
                 int s2 = -1, t2 = tArray[k].kth;
@@ -251,13 +251,11 @@ void getTravel(const Train &a, DateTime &O, DateTime &o,
 int buy_ticket (string (&m)[256]) {
     my_string id(m['i']), uid(m['u']);
     if (!isLogin(uid)) return -1;
-    
-    traindb.Find(id, placeArray);
-    
-    
-    if (!placeArray.size()) return -1;
+    int pla = -1;
+    traindb.Find(id, pla);
+    if (pla == -1) return -1;
     Train A;
-    trains.read(placeArray[0], A);
+    trains.read(pla, A);
     int num = stoi(m['n']);    
     if (!A.released || num > A.seatNum) return -1;
     my_string S(m['f']), T(m['t']);
@@ -322,8 +320,9 @@ void checkWait() {
     Train A;
     int st, ed, price, seat, date, num;
     for (int i = 0, k = waitArray.size(); i < k; ++i) {
-        traindb.Find(waitArray[i].trainid, placeArray);
-        trains.read(placeArray[0], A);
+        int pla = 0;
+        traindb.Find(waitArray[i].trainid, pla);
+        trains.read(pla, A);
         DateTime O(waitArray[i].O.date, A.startTime);
         DateTime o;
         st = 0, ed = -1;
@@ -355,8 +354,9 @@ int refund_ticket (string (&m)[256]) {
     Train A;
     if (orderArray[n].statue.key[1] == 's') {
         DateTrainSeat p;
-        traindb.Find(orderArray[n].trainid, placeArray);
-        trains.read(placeArray[0], A);
+        int pla = 0;
+        traindb.Find(orderArray[n].trainid, pla);
+        trains.read(pla, A);
         seats.read(A.place, orderArray[n].date, p);
         int st = 0, ed = 0;
         for (int i = 0; i < A.stationNum; ++i) {

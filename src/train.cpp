@@ -5,7 +5,6 @@
 BPlusTree<my_string, int> traindb("train.db", "train_bin.db");
 extern BPlusTree<my_string, TrainStation> stationdb;
 Train A;
-vector<int> placeArray;
 TrainFile trains("trains.db");
 SeatFile seats("seat.db");
 int SeatFile::sum;
@@ -28,9 +27,9 @@ void cleanTrain() {
 
 int add_train (string (&m)[256]) {
     
-
-    traindb.Find(m['i'], placeArray);
-    if (placeArray.size()) return -1;
+    int pla = -1;
+    traindb.Find(m['i'], pla);
+    if (pla != -1) return -1;
     
     Train a;
     a.id = m['i']; a.place = ++SeatFile::sum;
@@ -88,19 +87,21 @@ int add_train (string (&m)[256]) {
 }
 
 int delete_train (string (&m)[256]) { 
-    traindb.Find(m['i'], placeArray);
-    if (!placeArray.size()) return -1;
-    trains.read(placeArray[0], A);
+    int pla = -1;
+    traindb.Find(m['i'], pla);
+    if (pla == -1) return -1;
+    trains.read(pla, A);
     if (A.released) return -1;
     traindb.Delete(A.id, A.place);
     return 0;
 }
 int release_train (string (&m)[256]) {
     my_string id(m['i']);
-    traindb.Find(id, placeArray);
+    int pla = -1;
+    traindb.Find(id, pla);
     
-    if (!placeArray.size()) return -1;
-    trains.read(placeArray[0], A);
+    if (pla == -1) return -1;
+    trains.read(pla, A);
     if (A.released) return -1;
     traindb.Delete(id, A.place);
     A.released = true;
@@ -121,10 +122,10 @@ int release_train (string (&m)[256]) {
 int query_train (string (&m)[256]) {
 
     //return 0;
-
-    traindb.Find(m['i'], placeArray);
-    if (!placeArray.size()) return -1;
-    trains.read(placeArray[0], A);
+    int pla = -1;
+    traindb.Find(m['i'], pla);
+    if (pla == -1) return -1;
+    trains.read(pla, A);
     int day = Date(m['d']);
     if (day < A.startSaleDate || day > A.endSaleDate) return -1;
     std::cout << A.id << ' ' << A.type << '\n';

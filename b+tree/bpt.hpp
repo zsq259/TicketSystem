@@ -379,6 +379,26 @@ public:
             }
         }
     }
+    void Find(const Key &key, T &A) {
+        node a;
+        int head = root;
+        bool o = false;
+        while(head) {
+            ca.getNode(head, a);
+            if (a.type == LEAF) {
+                for (int i = 0; i < a.sum; ++i) {
+                    if (a.keys[i].first == key) { A = a.keys[i].second; return ; }
+                    else if (a.keys[i].first > key) return ;
+                }
+                head = a.next;
+            }
+            else {
+                int o = a.sum;
+                for (int i = 0; i < a.sum; ++i) if (key <= a.keys[i].first) { o = i; break; }
+                head = a.ch[o];
+            }
+        }
+    }
     void FindAll(vector<T> &array) {
         node a;
         array.clear();
