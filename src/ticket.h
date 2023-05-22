@@ -10,17 +10,18 @@
 class Order{
     public:
     my_string statue, trainid, userid, from, to;
-    int id, date, sDate, sTime, tDate, tTime, price, num;
+    int id, date, price, num;
+    DateTime O, o;
     Order() = default;
     Order(const string &s_, const string &tid_, const string &uid_, 
           const string &from_, const string &to_, 
-          int id_, int d_, int sD_, int sT_, int tD_, int tT_, int p_, int n_): 
+          int id_, int d_, int p_, int n_, const DateTime &O_, const DateTime &o_): 
           statue(s_), trainid(tid_), userid(uid_), from(from_), to(to_), id(id_), 
-          date(d_), sDate(sD_), sTime(sT_), tDate(tD_), tTime(tT_), price(p_), num(n_) {}
+          date(d_), price(p_), num(n_), O(O_), o(o_) {}
     void print() {
         cout << statue << ' ' << trainid << ' ';
-        cout << from << ' ' << Date(sDate).s << ' ' << Time(sTime).s << " -> ";
-        cout << to << ' ' << Date(tDate).s << ' ' << Time(tTime).s << ' ';
+        cout << from << ' ' << string(O.date) << ' ' << string(O.time) << " -> ";
+        cout << to << ' ' << string(o.date) << ' ' << string(o.time) << ' ';
         cout << price << ' ' << num << '\n';
     }
     bool operator <  (const Order &other) const { return id <  other.id; }
@@ -32,8 +33,6 @@ class Order{
 }; 
 
 void cleanTicket();
-void stationAdd(const my_string &a, const Train &b);
-void stationDel(const my_string &a, const Train &b);
 
 int query_ticket (string (&m)[256]);
 int query_transfer (string (&m)[256]);

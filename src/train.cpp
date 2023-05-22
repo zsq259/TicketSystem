@@ -2,31 +2,35 @@
 #include "ticket.h"
 #include <filesystem>
 
-BPlusTree<my_string, Train> traindb("train.db", "train_bin.db");
-vector<Train> trainArray;
-static SeatFile seats("seat.db");
+BPlusTree<my_string, int> traindb("train.db", "train_bin.db");
+extern BPlusTree<my_string, TrainStation> stationdb;
+Train A;
+vector<int> placeArray;
+TrainFile trains("trains.db");
+SeatFile seats("seat.db");
 int SeatFile::sum;
 
 void cleanTrain() {
-    (&traindb)->~BPlusTree<my_string, Train>();
+    (&traindb)->~BPlusTree<my_string, int>();
     std::filesystem::remove("train.db");
     std::filesystem::remove("train_bin.db");
-    new (&traindb) BPlusTree<my_string, Train>("train.db", "train_bin.db");
+    new (&traindb) BPlusTree<my_string, int>("train.db", "train_bin.db");
 
     (&seats)->~SeatFile();
     std::filesystem::remove("seat.db");
     new (&seats) SeatFile("seat.db");
+
+    (&trains)->~TrainFile();
+    std::filesystem::remove("trains.db");
+    new (&trains) TrainFile("trains.db");
 }
 
-void findTrain(const my_string &a, vector<Train> &v) {
-    traindb.Find(a, v);
-}
 
 int add_train (string (&m)[256]) {
     
 
-    traindb.Find(m['i'], trainArray);
-    if (trainArray.size()) return -1;
+    traindb.Find(m['i'], placeArray);
+    if (placeArray.size()) return -1;
     
     Train a;
     a.id = m['i']; a.place = ++SeatFile::sum;
@@ -34,6 +38,7 @@ int add_train (string (&m)[256]) {
     a.seatNum = stoi(m['m']);
     a.startTime = Time(m['x']);
     a.type = m['y'][0];
+    a.released = 0;
     int tot = 0;
     string str;
 
@@ -70,14 +75,9 @@ int add_train (string (&m)[256]) {
     }
 
     a.endSaleDate = Date(str);
-    
-    
-    
-    for (int i = 0; i < a.stationNum; ++i) {
-        stationAdd(a.stations[i], a);
-    }
-    traindb.Insert(a.id, a);
-
+        
+    traindb.Insert(a.id, a.place);
+    trains.write(a.place, a);
     DateTrainSeat p;
     for (int i = 0; i < a.stationNum; ++i) p[i] = a.seatNum;
     TrainSeat P;
@@ -88,74 +88,76 @@ int add_train (string (&m)[256]) {
 }
 
 int delete_train (string (&m)[256]) { 
-    
-    traindb.Find(m['i'], trainArray);
-    //return 0;
-    
-    if (!trainArray.size()) return -1;
-    if (trainArray[0].released) return -1;
-    traindb.Delete(m['i'], trainArray[0]);
-    for (int i = 0; i < trainArray[0].stationNum; ++i) {
-        stationDel(trainArray[0].stations[i], trainArray[0]);
-    }
-
+    traindb.Find(m['i'], placeArray);
+    if (!placeArray.size()) return -1;
+    trains.read(placeArray[0], A);
+    if (A.released) return -1;
+    traindb.Delete(A.id, A.place);
     return 0;
 }
 int release_train (string (&m)[256]) {
-
     my_string id(m['i']);
-    traindb.Find(id, trainArray);
-    if (!trainArray.size()) return -1;
-    if (trainArray[0].released) return -1;
-    traindb.Delete(id, trainArray[0]);
-    for (int i = 0; i < trainArray[0].stationNum; ++i) {
-        //std::cerr << "i=" << i << trainArray[0].stations[i] << '\n';
-        stationDel(trainArray[0].stations[i], trainArray[0]);
+    traindb.Find(id, placeArray);
+    
+    if (!placeArray.size()) return -1;
+    trains.read(placeArray[0], A);
+    if (A.released) return -1;
+    traindb.Delete(id, A.place);
+    A.released = true;
+    traindb.Insert(id, A.place);
+    trains.write(A.place, A);
+    int time = 0, price = 0;
+    TrainStation b(A);
+    for (int i = 0; i < A.stationNum; ++i) {
+        b.kth = i; b.price = price; b.arrivetime = time;
+        if (i && i != A.stationNum - 1) b.stoptime = A.stopoverTimes[i - 1];
+        else b.stoptime = 0; 
+        stationdb.Insert(A.stations[i], b);
+        price += A.prices[i];
+        time += b.stoptime + A.travelTimes[i];
     }
-    trainArray[0].released = true;
-    traindb.Insert(id, trainArray[0]);
-    for (int i = 0; i < trainArray[0].stationNum; ++i) stationAdd(trainArray[0].stations[i], trainArray[0]);
     return 0;
 }
 int query_train (string (&m)[256]) {
 
     //return 0;
 
-    traindb.Find(m['i'], trainArray);
-    if (!trainArray.size()) return -1;
+    traindb.Find(m['i'], placeArray);
+    if (!placeArray.size()) return -1;
+    trains.read(placeArray[0], A);
     int day = Date(m['d']);
-    if (day < trainArray[0].startSaleDate || day > trainArray[0].endSaleDate) return -1;
-    std::cout << trainArray[0].id << ' ' << trainArray[0].type << '\n';
+    if (day < A.startSaleDate || day > A.endSaleDate) return -1;
+    std::cout << A.id << ' ' << A.type << '\n';
     DateTrainSeat p;
-    DateTime O(Date(m['d']), Time(trainArray[0].startTime));
+    DateTime O(Date(m['d']), Time(A.startTime));
     int price = 0;
-    seats.read(trainArray[0].place, O.date, p);
+    seats.read(A.place, O.date, p);
 
-    for (int i = 0; i < trainArray[0].stationNum; ++i) {
-        cout << trainArray[0].stations[i] << ' ';
+    for (int i = 0; i < A.stationNum; ++i) {
+        cout << A.stations[i] << ' ';
 
 
-        if (!i) cout << Date(0).s << ' ' << Time(-1).s << " -> ";
+        if (!i) cout << string(Date(0)) << ' ' << string(Time(-1)) << " -> ";
         else { O.print(); cout << " -> "; }
 
         
 
-        if (i) O += trainArray[0].stopoverTimes[i - 1];
+        if (i) O += A.stopoverTimes[i - 1];
         
         
-        if (i != trainArray[0].stationNum - 1) O.print();
-        else cout <<Date(0).s << ' ' << Time(-1).s;
+        if (i != A.stationNum - 1) O.print();
+        else cout << string(Date(0)) << ' ' << string(Time(-1));
         
         
         
         cout << ' ' << price << ' ';
-        if (i == trainArray[0].stationNum - 1) cout << "x\n";
+        if (i == A.stationNum - 1) cout << "x\n";
         else cout << p[i] << '\n';
         
         
 
-        price += trainArray[0].prices[i];
-        O += trainArray[0].travelTimes[i];
+        price += A.prices[i];
+        O += A.travelTimes[i];
         
     }
     return 0;

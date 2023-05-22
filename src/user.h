@@ -3,7 +3,7 @@
 #include <cstring>
 #include <iostream>
 #include <filesystem>
-#define USE_KUPI_BPT
+//#define USE_KUPI_BPT
 #ifdef USE_KUPI_BPT
 #include "../b+tree/kp_bpt.hpp"
 #else

@@ -10,45 +10,50 @@ using std::fstream;
 
 class Date {
     public:
-    std::string s;
+    int x = 0;
     Date() {}
-    Date(std::string s_):s(s_) {}
-    Date(int x) {  
-        if (!x) s =  "xx-xx";
-        else if (x <= 30) s =  "06-" + string(x < 10? "0" : "") + std::to_string(x);
-        else if (x <= 61) s =  "07-" + string(x < 40? "0" : "") + std::to_string(x - 30);
-        else if (x <= 92) s =  "08-" + string(x < 71? "0" : "") + std::to_string(x - 61);
-        else s =  "09-" + string(x < 102? "0" : "") + std::to_string(x - 92);
-    }
-    operator int() const { 
+    Date(int x_):x(x_) {}
+    Date(std::string s) {
         int mm = 0, nn = 0;
         mm = s[1] - '0';
         nn = (s[3] - '0') * 10 + s[4] - '0';
-        if (mm == 6) return nn;
-        if (mm == 7) return nn + 30;
-        if (mm == 8) return nn + 61;
-        if (mm == 9) return nn + 92;
-        return 0;
+        if (mm == 6) x = nn;
+        if (mm == 7) x = nn + 30;
+        if (mm == 8) x = nn + 61;
+        if (mm == 9) x = nn + 92;
     }
-    const void print() const { cout << s; }
+    operator string() const {  
+        if (!x) return "xx-xx";
+        else if (x <= 30) return "06-" + string(x < 10? "0" : "") + std::to_string(x);
+        else if (x <= 61) return "07-" + string(x < 40? "0" : "") + std::to_string(x - 30);
+        else if (x <= 92) return "08-" + string(x < 71? "0" : "") + std::to_string(x - 61);
+        else return "09-" + string(x < 102? "0" : "") + std::to_string(x - 92);
+    }
+    operator int() const { 
+        return x;
+    }
+    const void print() const { cout << string(); }
 };
 
 class Time {
     public:
-    std::string s;
+    int x = -1;
     Time() {}
-    Time(std::string s_):s(s_) {}
-    Time(int x) {
-        if (x == -1)  s =  "xx:xx";
-        else s = string(x / 60 < 10? "0" : "") + std::to_string(x / 60) + ":" + string(x % 60 < 10? "0" : "") + std::to_string(x % 60);
-    }
-    operator int() const {
+    Time(int x_):x(x_) {}
+    Time(std::string s) {
         int mm = 0, nn = 0;
         mm = (s[0] - '0') * 10 + s[1] - '0';
         nn = (s[3] - '0') * 10 + s[4] - '0';
-        return mm * 60 + nn;
+        x = mm * 60 + nn;
     }
-    const void print() const { cout << s; }
+    operator string() const {
+        if (x == -1)  return "xx:xx";
+        else return string(x / 60 < 10? "0" : "") + std::to_string(x / 60) + ":" + string(x % 60 < 10? "0" : "") + std::to_string(x % 60);
+    }
+    operator int() const {
+        return x;
+    }
+    const void print() const { cout << string(); }
 };
 
 class DateTime {
@@ -58,7 +63,8 @@ class DateTime {
     DateTime():date(), time() {}
     DateTime(Date a, Time b):date(a), time(b) {}
     DateTime(string a, string b):date(a), time(b) {}
-    const void print() const { date.print(); cout << ' '; time.print(); }
+    DateTime(const DateTime &other):date(other.date), time(other.time) {}
+    const void print() const { cout << (&date)->operator string() <<  ' ' << string(time); }
     DateTime &operator+ (int x) {
         // puts("\n\nstart");
         // print();
@@ -81,23 +87,76 @@ class DateTime {
     }
 };
 
-class Train {
+class TrainBase {
+    public:
+    my_string id;
+    int seatNum, startTime, startSaleDate, endSaleDate;
+    int place;
+    TrainBase() {}
+    TrainBase(const TrainBase &other): 
+        id(other.id), place(other.place),  
+        seatNum(other.seatNum), 
+        startTime(other.startTime),
+        startSaleDate(other.startSaleDate), endSaleDate(other.endSaleDate) {
+    }
+    TrainBase &operator = (const TrainBase &other) {
+        if (&other == this) return *this;
+        id = other.id; place = other.place;
+        seatNum = other.seatNum; 
+        startTime = other.startTime;
+        startSaleDate = other.startSaleDate; endSaleDate = other.endSaleDate;
+        return *this;
+    }
+    bool operator <  (const TrainBase &other) const { return id <  other.id; }
+    bool operator >  (const TrainBase &other) const { return id >  other.id; }
+    bool operator <= (const TrainBase &other) const { return id <= other.id; }
+    bool operator >= (const TrainBase &other) const { return id >= other.id; }
+    bool operator == (const TrainBase &other) const { return id == other.id; }
+    bool operator != (const TrainBase &other) const { return id != other.id; }
+
+};
+
+class TrainStation: public TrainBase {
+    public:
+    int kth, price, arrivetime, stoptime;
+    TrainStation():TrainBase() {}
+    TrainStation(const TrainBase &other):TrainBase(other) {}
+    TrainStation(const TrainStation &other):TrainBase(other), 
+                                            kth(other.kth), 
+                                            price(other.price), 
+                                            arrivetime(other.arrivetime),
+                                            stoptime(other.stoptime) {}
+    TrainStation &operator= (const TrainStation &other) {
+        if (&other == this) return *this;
+        TrainBase::operator= (other);
+        kth = other.kth;
+        price = other.price;
+        arrivetime = other.arrivetime;
+        stoptime = other.stoptime;
+        return *this;
+    }
+    bool operator <  (const TrainStation &other) const { return id <  other.id; }
+    bool operator >  (const TrainStation &other) const { return id >  other.id; }
+    bool operator <= (const TrainStation &other) const { return id <= other.id; }
+    bool operator >= (const TrainStation &other) const { return id >= other.id; }
+    bool operator == (const TrainStation &other) const { return id == other.id; }
+    bool operator != (const TrainStation &other) const { return id != other.id; }
+};
+
+class Train: public TrainBase {
     private:
     static const int S = 102;
     public:
-    my_string id;
     my_string stations[S];
-    int stationNum, seatNum, startTime, startSaleDate, endSaleDate;
+    int stationNum;
     int prices[S], travelTimes[S], stopoverTimes[S];
     char type;
     bool released = false;
-    int place;
     Train() {}
     Train(const Train &other): 
-        id(other.id), released(other.released), place(other.place),  
-        stationNum(other.stationNum), seatNum(other.seatNum), 
-        startTime(other.startTime), type(other.type), 
-        startSaleDate(other.startSaleDate), endSaleDate(other.endSaleDate) {
+        TrainBase(other), released(other.released),  
+        stationNum(other.stationNum), 
+        type(other.type) {
         //for (int i = 0; i < stationNum; ++i) stations[i] = other.stations[i];
         memcpy(stations, other.stations, sizeof(stations));
         memcpy(prices, other.prices, sizeof(prices));
@@ -109,10 +168,10 @@ class Train {
     }
     Train &operator = (const Train &other) {
         if (&other == this) return *this;
-        id = other.id; released = other.released; place = other.place;
-        stationNum = other.stationNum; seatNum = other.seatNum; 
-        startTime = other.startTime; type = other.type; 
-        startSaleDate = other.startSaleDate; endSaleDate = other.endSaleDate;
+        TrainBase::operator= (other);
+        released = other.released;
+        stationNum = other.stationNum;
+        type = other.type; 
         //for (int i = 0; i < stationNum; ++i) stations[i] = other.stations[i];
         memcpy(stations, other.stations, sizeof(stations));
         memcpy(prices, other.prices, sizeof(prices));
@@ -129,6 +188,31 @@ class Train {
     bool operator >= (const Train &other) const { return id >= other.id; }
     bool operator == (const Train &other) const { return id == other.id; }
     bool operator != (const Train &other) const { return id != other.id; }
+};
+
+class TrainFile {
+private:
+    fstream io;
+    public:
+    explicit TrainFile(const char FileName_[]) {
+        io.open(FileName_, fstream::in);
+        bool flag = io.is_open();
+        io.close();
+        if (!flag) {
+            io.open(FileName_, fstream::out);
+            io.close();
+        }
+        io.open(FileName_, fstream::in | fstream::out | fstream::binary);
+    }
+    ~TrainFile() {}
+    void read(int place, Train &a) {
+        io.seekg((place - 1) * sizeof(Train));
+        io.read(reinterpret_cast<char *>(&a), sizeof(a));
+    }
+    void write(int place, const Train &a) {
+        io.seekg((place - 1) * sizeof(Train));
+        io.write(reinterpret_cast<const char *>(&a), sizeof(a));
+    }
 };
 
 class DateTrainSeat {
@@ -208,7 +292,6 @@ class SeatFile {
 };
 
 void cleanTrain();
-void findTrain(const my_string &a, vector<Train> &v);
 
 int add_train (string (&m)[256]);
 int delete_train (string (&m)[256]);
