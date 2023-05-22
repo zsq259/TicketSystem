@@ -67,17 +67,12 @@ class DateTime {
     DateTime(const DateTime &other):date(other.date), time(other.time) {}
     const void print() const { cout << (&date)->operator string() <<  ' ' << string(time); }
     DateTime &operator+ (int x) {
-        // puts("\n\nstart");
-        // print();
         int t = time;
         int d = date, h = t / 60, m = t % 60;
-        // cout << "\nx= " << x << ' ' << t << ' ' << d << ' ' << h << ' ' << m << '\n';
         m += x;
         h += m / 60; m %= 60;
         d += h / 24; h %= 24;
         date = d; time = h * 60 + m;
-        // print();
-        // puts("end\n\n");
         return *this;
     }
     int operator-(const DateTime &other) {
@@ -158,14 +153,10 @@ class Train: public TrainBase {
         TrainBase(other), released(other.released),  
         stationNum(other.stationNum), 
         type(other.type) {
-        //for (int i = 0; i < stationNum; ++i) stations[i] = other.stations[i];
         memcpy(stations, other.stations, sizeof(stations));
         memcpy(prices, other.prices, sizeof(prices));
         memcpy(travelTimes, other.travelTimes, sizeof(travelTimes));
         memcpy(stopoverTimes, other.stopoverTimes, sizeof(stopoverTimes));
-        // memcpy(prices, other.prices, sizeof(int) * stationNum);
-        // memcpy(travelTimes, other.travelTimes, sizeof(int) * stationNum);
-        // memcpy(stopoverTimes, other.stopoverTimes, sizeof(int) * stationNum);
     }
     Train &operator = (const Train &other) {
         if (&other == this) return *this;
@@ -173,14 +164,10 @@ class Train: public TrainBase {
         released = other.released;
         stationNum = other.stationNum;
         type = other.type; 
-        //for (int i = 0; i < stationNum; ++i) stations[i] = other.stations[i];
         memcpy(stations, other.stations, sizeof(stations));
         memcpy(prices, other.prices, sizeof(prices));
         memcpy(travelTimes, other.travelTimes, sizeof(travelTimes));
         memcpy(stopoverTimes, other.stopoverTimes, sizeof(stopoverTimes));
-        // memcpy(prices, other.prices, sizeof(int) * stationNum);
-        // memcpy(travelTimes, other.travelTimes, sizeof(int) * stationNum);
-        // memcpy(stopoverTimes, other.stopoverTimes, sizeof(int) * stationNum);
         return *this;
     }
     bool operator <  (const Train &other) const { return id <  other.id; }
@@ -250,8 +237,6 @@ class SeatFile {
     public:
     static int sum;
     explicit SeatFile(const char FileName_[]) {
-        //std::cerr << sizeof(TrainSeat) << ' ' << sizeof(DateTrainSeat) << '\n';
-
         io.open(FileName_, fstream::in);
         bool flag = io.is_open();
         io.close();

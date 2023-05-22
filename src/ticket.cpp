@@ -129,7 +129,6 @@ int query_ticket (string (&m)[256]) {
         else b[i] = tArray[p2].arrivetime - sArray[p1].arrivetime - sArray[p1].stoptime;
         DateTime O(D, sArray[p1].startTime);
         int date = D;
-        //O += (tArray[p2].arrivetime - sArray[p1].arrivetime + sArray[p1].stoptime);
         O += sArray[p1].arrivetime + sArray[p1].stoptime;
         date -= (int)O.date - date;
         O.date = D;
@@ -199,12 +198,10 @@ int query_transfer (string (&m)[256]) {
                 o += time;
                 da -= o.date.x - da;
                 o.date = O.date;
-                
                 if (o - O < 0) {
                     ++da; 
                     ++o.date.x;
                 }
-                
                 if (da < B.startSaleDate) {                    
                     o.date.x += (B.startSaleDate - da);
                     da = B.startSaleDate;
@@ -236,18 +233,14 @@ int query_transfer (string (&m)[256]) {
 void getTravel(const Train &a, DateTime &O, DateTime &o, 
               int &price, int &seat, int &date, int &num, int &st, int &ed, 
               const my_string &S, const my_string &T, DateTrainSeat &p) {
-    
     for (int j = 0; j < st; ++j) O += a.stopoverTimes[j] + a.travelTimes[j];
     int tmp = date;
     date -= (int)O.date - tmp; 
     O.date = tmp;
     o = O;
-    
     for (int i = st; i < ed; ++i) o += a.travelTimes[i];
     for (int i = st; i < ed - 1; ++i) o += a.stopoverTimes[i];
-    
     seats.read(a.place, date, p);
-
     for (int i = st; i < ed; ++i) {
         price += a.prices[i];
         seat = std::min(seat, p[i]);
@@ -266,17 +259,12 @@ int buy_ticket (string (&m)[256]) {
     if (!A.released || num > A.seatNum) return -1;
     my_string S(m['f']), T(m['t']);
     int D = Date(m['d']);
-    
-
     int st = -1, ed = -1, price = 0, seat = 114514, date = D;
-    
     for (int i = 0; i < A.stationNum; ++i) {
         if (A.stations[i] == S) st = i;
         if (A.stations[i] == T) ed = i;
     }
-    
     if (st == -1 || ed == -1 || st >= ed) return -1;
-    
     DateTime O(D, A.startTime);
     for (int j = 0; j < st; ++j) O += A.stopoverTimes[j] + A.travelTimes[j];
     date -= O.date - date;
@@ -285,15 +273,12 @@ int buy_ticket (string (&m)[256]) {
     DateTime o(O);
     for (int i = st; i < ed; ++i) o += A.travelTimes[i];
     for (int i = st; i < ed - 1; ++i) o += A.stopoverTimes[i];
-    
     DateTrainSeat p;
     seats.read(A.place, date, p);
-
     for (int i = st; i < ed; ++i) {
         price += A.prices[i];
         seat = std::min(seat, p[i]);
     }
-    
     if (seat >= num) {
         Order a("[success]", m['i'], m['u'], S, T, stoi(m[0]), date, price, num, O, o);
         for (int i = st; i < ed; ++i) p[i] -= num;

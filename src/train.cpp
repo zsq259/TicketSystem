@@ -10,23 +10,19 @@ SeatFile seats("seat.db");
 vector<int> rbq;
 std::hash<std::string> hashstr;
 int SeatFile::sum;
-//int cnt1 = 0, cnt2 = 0;
 
 void cleanTrain() {
     (&traindb)->~BPlusTree<size_t, int>();
     std::filesystem::remove("train.db");
     std::filesystem::remove("train_bin.db");
     new (&traindb) BPlusTree<size_t, int>("train.db", "train_bin.db");
-
     (&seats)->~SeatFile();
     std::filesystem::remove("seat.db");
     new (&seats) SeatFile("seat.db");
-
     (&trains)->~FileStore<Train>();
     std::filesystem::remove("trains.db");
     new (&trains) FileStore<Train>("trains.db");
 }
-
 
 int add_train (string (&m)[256]) {
     int pla = -1;
@@ -54,14 +50,11 @@ int add_train (string (&m)[256]) {
         else str += m['p'][i];
     }
     a.prices[tot] = stoi(str); tot = 0; str.clear();
-
-
     for (int i = 0, k = m['t'].size(); i < k; ++i) {
         if (m['t'][i] == '|') a.travelTimes[tot] = stoi(str), ++tot, str.clear();
         else str += m['t'][i];
     }
     a.travelTimes[tot] = stoi(str); tot = 0; str.clear();
-
     if (a.stationNum > 2) {
         for (int i = 0, k = m['o'].size(); i < k; ++i) {
             if (m['o'][i] == '|') a.stopoverTimes[tot] = stoi(str), ++tot, str.clear();
@@ -69,23 +62,18 @@ int add_train (string (&m)[256]) {
         }
         a.stopoverTimes[tot] = stoi(str); tot = 0; str.clear();
     }
-
     for (int i = 0, k = m['d'].size(); i < k; ++i) {
         if (m['d'][i] == '|') a.startSaleDate = Date(str), ++tot, str.clear();
         else str += m['d'][i];
     }
-
-    a.endSaleDate = Date(str);
-        
+    a.endSaleDate = Date(str);     
     traindb.Insert(hashstr(m['i']), a.place);
     trains.write(a.place, a);
     DateTrainSeat p;
     for (int i = 0; i < a.stationNum; ++i) p[i] = a.seatNum;
     TrainSeat P;
     for (int i = Date("06-01"), k = Date("08-31"); i <= k; ++i) P[i] = p;
-
     seats.write(a.place, P);
-    //++cnt1;
     return 0;
 }
 
@@ -97,14 +85,13 @@ int delete_train (string (&m)[256]) {
     if (A.released) return -1;
     traindb.Delete(hashstr(m['i']), A.place);
     rbq.push_back(A.place);
-    //++cnt2;
     return 0;
 }
+
 int release_train (string (&m)[256]) {
     my_string id(m['i']);
     int pla = -1;
     traindb.Find(hashstr(m['i']), pla);
-    
     if (pla == -1) return -1;
     trains.read(pla, A);
     if (A.released) return -1;
@@ -124,9 +111,8 @@ int release_train (string (&m)[256]) {
     }
     return 0;
 }
-int query_train (string (&m)[256]) {
 
-    //return 0;
+int query_train (string (&m)[256]) {
     int pla = -1;
     traindb.Find(hashstr(m['i']), pla);
     if (pla == -1) return -1;
@@ -138,33 +124,18 @@ int query_train (string (&m)[256]) {
     DateTime O(Date(m['d']), Time(A.startTime));
     int price = 0;
     seats.read(A.place, O.date, p);
-
     for (int i = 0; i < A.stationNum; ++i) {
         cout << A.stations[i] << ' ';
-
-
         if (!i) cout << string(Date(0)) << ' ' << string(Time(-1)) << " -> ";
         else { O.print(); cout << " -> "; }
-
-        
-
-        if (i) O += A.stopoverTimes[i - 1];
-        
-        
+        if (i) O += A.stopoverTimes[i - 1];        
         if (i != A.stationNum - 1) O.print();
-        else cout << string(Date(0)) << ' ' << string(Time(-1));
-        
-        
-        
+        else cout << string(Date(0)) << ' ' << string(Time(-1));  
         cout << ' ' << price << ' ';
         if (i == A.stationNum - 1) cout << "x\n";
         else cout << p[i] << '\n';
-        
-        
-
         price += A.prices[i];
         O += A.travelTimes[i];
-        
     }
     return 0;
 }
