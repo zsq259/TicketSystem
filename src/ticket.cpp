@@ -4,13 +4,15 @@
 
 BPlusTree<my_string, TrainStation> stationdb("station.db", "station_bin.db");
 BPlusTree<my_string, Order> orderdb("order.db", "order_bin.db");
-BPlusTree<int, Order> waitdb("wait.db", "wait_bin.db");
+BPlusTree<int, int> waitdb("wait.db", "wait_bin.db");
 extern BPlusTree<my_string, int> traindb;
 vector<TrainStation> sArray, tArray;
 vector<pair<int, int> > v;
-vector<Order> orderArray, waitArray;
+vector<Order> orderArray;
+vector<int> waitArray;
+FileStore<Order> waits("waits.db");
 extern SeatFile seats;
-extern TrainFile trains;
+extern FileStore<Train> trains;
 
 
 void cleanTicket() {
@@ -24,10 +26,14 @@ void cleanTicket() {
     std::filesystem::remove("order_bin.db");
     new (&orderdb) BPlusTree<my_string, Order>("order.db", "order_bin.db");
 
-    (&waitdb)->~BPlusTree<int, Order>();
+    (&waitdb)->~BPlusTree<int, int>();
     std::filesystem::remove("wait.db");
     std::filesystem::remove("wait_bin.db");
-    new (&waitdb) BPlusTree<int, Order>("wait.db", "wait_bin.db");
+    new (&waitdb) BPlusTree<int, int>("wait.db", "wait_bin.db");
+
+    (&waits)->~FileStore<Order>();
+    std::filesystem::remove("waits.db");
+    new (&trains) FileStore<Order>("waits.db");
 }
 
 bool findPlace(int &st, int &ed, const Train &a, const my_string &S, const my_string &T) {
@@ -298,7 +304,8 @@ int buy_ticket (string (&m)[256]) {
     else {
         if (!m['q'].size() || m['q'] == "false") return -1;
         Order a("[pending]", m['i'], m['u'], S, T, stoi(m[0]), date, price, num, O, o);
-        waitdb.Insert(a.id, a);
+        waitdb.Insert(a.id, a.id);
+        waits.write(a.id, a);
         orderdb.Insert(a.userid, a);
         cout << "queue\n";
     }
@@ -318,27 +325,29 @@ void checkWait() {
     waitdb.FindAll(waitArray);
     DateTrainSeat p;
     Train A;
+    Order B;
     int st, ed, price, seat, date, num;
     for (int i = 0, k = waitArray.size(); i < k; ++i) {
         int pla = 0;
-        traindb.Find(waitArray[i].trainid, pla);
+        waits.read(waitArray[i], B);
+        traindb.Find(B.trainid, pla);
         trains.read(pla, A);
-        DateTime O(waitArray[i].O.date, A.startTime);
+        DateTime O(B.O.date, A.startTime);
         DateTime o;
         st = 0, ed = -1;
-        int price = 0, seat = 114514, date = Date(waitArray[i].O.date), num = waitArray[i].num;
-        if (!findPlace(st, ed, A, waitArray[i].from, waitArray[i].to)) continue;
+        int price = 0, seat = 114514, date = Date(B.O.date), num = B.num;
+        if (!findPlace(st, ed, A, B.from, B.to)) continue;
         if (ed < st) continue;
-        getTravel(A, O, o, price, seat, date, num, st, ed, waitArray[i].from, waitArray[i].to, p);
+        getTravel(A, O, o, price, seat, date, num, st, ed, B.from, B.to, p);
         if (date < A.startSaleDate || date > A.endSaleDate) continue;
         if (seat < num) continue;
         for (int i = st; i < ed; ++i) p[i] -= num;
         seats.write(A.place, date, p);
-        waitdb.Delete(waitArray[i].id, waitArray[i]);
-        orderdb.Delete(waitArray[i].userid, waitArray[i]);
+        waitdb.Delete(B.id, B.id);
+        orderdb.Delete(B.userid, B);
         string str = "[success]";
-        waitArray[i].statue = str;
-        orderdb.Insert(waitArray[i].userid, waitArray[i]);        
+        B.statue = str;
+        orderdb.Insert(B.userid, B);        
     }
     waitArray.clear();
 }

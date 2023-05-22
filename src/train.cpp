@@ -5,7 +5,7 @@
 BPlusTree<my_string, int> traindb("train.db", "train_bin.db");
 extern BPlusTree<my_string, TrainStation> stationdb;
 Train A;
-TrainFile trains("trains.db");
+FileStore<Train> trains("trains.db");
 SeatFile seats("seat.db");
 int SeatFile::sum;
 
@@ -19,9 +19,9 @@ void cleanTrain() {
     std::filesystem::remove("seat.db");
     new (&seats) SeatFile("seat.db");
 
-    (&trains)->~TrainFile();
+    (&trains)->~FileStore<Train>();
     std::filesystem::remove("trains.db");
-    new (&trains) TrainFile("trains.db");
+    new (&trains) FileStore<Train>("trains.db");
 }
 
 

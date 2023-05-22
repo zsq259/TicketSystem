@@ -190,11 +190,12 @@ class Train: public TrainBase {
     bool operator != (const Train &other) const { return id != other.id; }
 };
 
-class TrainFile {
+template<class T>
+class FileStore {
 private:
     fstream io;
     public:
-    explicit TrainFile(const char FileName_[]) {
+    explicit FileStore(const char FileName_[]) {
         io.open(FileName_, fstream::in);
         bool flag = io.is_open();
         io.close();
@@ -204,13 +205,13 @@ private:
         }
         io.open(FileName_, fstream::in | fstream::out | fstream::binary);
     }
-    ~TrainFile() {}
-    void read(int place, Train &a) {
-        io.seekg((place - 1) * sizeof(Train));
+    ~FileStore() {}
+    void read(int place, T &a) {
+        io.seekg((place - 1) * sizeof(T));
         io.read(reinterpret_cast<char *>(&a), sizeof(a));
     }
-    void write(int place, const Train &a) {
-        io.seekg((place - 1) * sizeof(Train));
+    void write(int place, const T &a) {
+        io.seekg((place - 1) * sizeof(T));
         io.write(reinterpret_cast<const char *>(&a), sizeof(a));
     }
 };
