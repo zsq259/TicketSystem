@@ -1,5 +1,6 @@
 #ifndef TICKET_SYSTEM_TRAIN_H
 #define TICKET_SYSTEM_TRAIN_H
+#include <fstream>
 #include <iostream>
 #include <cstdio>
 #include <cstring>
@@ -90,8 +91,8 @@ class DateTime {
 class TrainBase {
     public:
     my_string id;
-    int seatNum, startTime, startSaleDate, endSaleDate;
-    int place;
+    int startSaleDate, endSaleDate;
+    int place, seatNum, startTime;
     TrainBase() {}
     TrainBase(const TrainBase &other): 
         id(other.id), place(other.place),  

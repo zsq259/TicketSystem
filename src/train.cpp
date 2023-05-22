@@ -2,20 +2,21 @@
 #include "ticket.h"
 #include <filesystem>
 
-BPlusTree<my_string, int> traindb("train.db", "train_bin.db");
-extern BPlusTree<my_string, TrainStation> stationdb;
+BPlusTree<size_t, int> traindb("train.db", "train_bin.db");
+extern BPlusTree<size_t, TrainStation> stationdb;
 Train A;
 FileStore<Train> trains("trains.db");
 SeatFile seats("seat.db");
 vector<int> rbq;
+std::hash<std::string> hashstr;
 int SeatFile::sum;
 //int cnt1 = 0, cnt2 = 0;
 
 void cleanTrain() {
-    (&traindb)->~BPlusTree<my_string, int>();
+    (&traindb)->~BPlusTree<size_t, int>();
     std::filesystem::remove("train.db");
     std::filesystem::remove("train_bin.db");
-    new (&traindb) BPlusTree<my_string, int>("train.db", "train_bin.db");
+    new (&traindb) BPlusTree<size_t, int>("train.db", "train_bin.db");
 
     (&seats)->~SeatFile();
     std::filesystem::remove("seat.db");
@@ -29,7 +30,7 @@ void cleanTrain() {
 
 int add_train (string (&m)[256]) {
     int pla = -1;
-    traindb.Find(m['i'], pla);
+    traindb.Find(hashstr(m['i']), pla);
     if (pla != -1) return -1;
     Train a;
     a.id = m['i']; 
@@ -76,7 +77,7 @@ int add_train (string (&m)[256]) {
 
     a.endSaleDate = Date(str);
         
-    traindb.Insert(a.id, a.place);
+    traindb.Insert(hashstr(m['i']), a.place);
     trains.write(a.place, a);
     DateTrainSeat p;
     for (int i = 0; i < a.stationNum; ++i) p[i] = a.seatNum;
@@ -90,11 +91,11 @@ int add_train (string (&m)[256]) {
 
 int delete_train (string (&m)[256]) { 
     int pla = -1;
-    traindb.Find(m['i'], pla);
+    traindb.Find(hashstr(m['i']), pla);
     if (pla == -1) return -1;
     trains.read(pla, A);
     if (A.released) return -1;
-    traindb.Delete(A.id, A.place);
+    traindb.Delete(hashstr(m['i']), A.place);
     rbq.push_back(A.place);
     //++cnt2;
     return 0;
@@ -102,14 +103,14 @@ int delete_train (string (&m)[256]) {
 int release_train (string (&m)[256]) {
     my_string id(m['i']);
     int pla = -1;
-    traindb.Find(id, pla);
+    traindb.Find(hashstr(m['i']), pla);
     
     if (pla == -1) return -1;
     trains.read(pla, A);
     if (A.released) return -1;
-    traindb.Delete(id, A.place);
+    traindb.Delete(hashstr(m['i']), A.place);
     A.released = true;
-    traindb.Insert(id, A.place);
+    traindb.Insert(hashstr(m['i']), A.place);
     trains.write(A.place, A);
     int time = 0, price = 0;
     TrainStation b(A);
@@ -117,7 +118,7 @@ int release_train (string (&m)[256]) {
         b.kth = i; b.price = price; b.arrivetime = time;
         if (i && i != A.stationNum - 1) b.stoptime = A.stopoverTimes[i - 1];
         else b.stoptime = 0; 
-        stationdb.Insert(A.stations[i], b);
+        stationdb.Insert(hashstr(A.stations[i]), b);
         price += A.prices[i];
         time += b.stoptime + A.travelTimes[i];
     }
@@ -127,7 +128,7 @@ int query_train (string (&m)[256]) {
 
     //return 0;
     int pla = -1;
-    traindb.Find(m['i'], pla);
+    traindb.Find(hashstr(m['i']), pla);
     if (pla == -1) return -1;
     trains.read(pla, A);
     int day = Date(m['d']);

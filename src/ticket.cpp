@@ -2,10 +2,10 @@
 #include "train.h"
 #include "user.h"
 
-BPlusTree<my_string, TrainStation> stationdb("station.db", "station_bin.db");
-BPlusTree<my_string, Order> orderdb("order.db", "order_bin.db");
+BPlusTree<size_t, TrainStation> stationdb("station.db", "station_bin.db");
+BPlusTree<size_t, Order> orderdb("order.db", "order_bin.db");
 BPlusTree<int, int> waitdb("wait.db", "wait_bin.db");
-extern BPlusTree<my_string, int> traindb;
+extern BPlusTree<size_t, int> traindb;
 vector<TrainStation> sArray, tArray;
 vector<pair<int, int> > v;
 vector<Order> orderArray;
@@ -13,18 +13,18 @@ vector<int> waitArray;
 FileStore<Order> waits("waits.db");
 extern SeatFile seats;
 extern FileStore<Train> trains;
-
+extern std::hash<std::string> hashstr;
 
 void cleanTicket() {
-    (&stationdb)->~BPlusTree<my_string, TrainStation>();
+    (&stationdb)->~BPlusTree<size_t, TrainStation>();
     std::filesystem::remove("station.db");
     std::filesystem::remove("station_bin.db");
-    new (&stationdb) BPlusTree<my_string, Train>("station.db", "station_bin.db");
+    new (&stationdb) BPlusTree<size_t, Train>("station.db", "station_bin.db");
 
-    (&orderdb)->~BPlusTree<my_string, Order>();
+    (&orderdb)->~BPlusTree<size_t, Order>();
     std::filesystem::remove("order.db");
     std::filesystem::remove("order_bin.db");
-    new (&orderdb) BPlusTree<my_string, Order>("order.db", "order_bin.db");
+    new (&orderdb) BPlusTree<size_t, Order>("order.db", "order_bin.db");
 
     (&waitdb)->~BPlusTree<int, int>();
     std::filesystem::remove("wait.db");
@@ -96,8 +96,8 @@ class Travel {
 int query_ticket (string (&m)[256]) {
     int op = (!m['p'].size() || m['p'] == "time");
     my_string S(m['s']), T(m['t']);
-    stationdb.Find(S, sArray);
-    stationdb.Find(T, tArray);    
+    stationdb.Find(hashstr(m['s']), sArray);
+    stationdb.Find(hashstr(m['t']), tArray);    
     int p1 = 0, p2 = 0, k1 = sArray.size(), k2 = tArray.size();
     v.clear();
     int tot = 0, D = Date(m['d']);
@@ -157,8 +157,8 @@ bool cmp(int op, int p1, int p2, int bp, int bt, int i, int j, int pri, int ti) 
 int query_transfer (string (&m)[256]) {    
     int op = (!m['p'].size() || m['p'] == "time");
     my_string S(m['s']), T(m['t']);
-    stationdb.Find(S, sArray);
-    stationdb.Find(T, tArray);
+    stationdb.Find(hashstr(m['s']), sArray);
+    stationdb.Find(hashstr(m['t']), tArray);
     int k1 = sArray.size(), k2 = tArray.size();
     if (!k1 || !k2) { cout << "0\n"; return 0; }
     int D = Date(m['d']), flag = 0;
@@ -167,7 +167,7 @@ int query_transfer (string (&m)[256]) {
     my_string trans;
     for (int i = 0; i < k1; ++i) {
         int pla = 0;;
-        traindb.Find(sArray[i].id, pla);
+        traindb.Find(hashstr(sArray[i].id), pla);
         Train A;
         trains.read(pla, A);
         int s1 = sArray[i].kth, t1 = A.stationNum - 1;
@@ -180,7 +180,7 @@ int query_transfer (string (&m)[256]) {
         DateTime SO = O; // get on train A
         for (int k = 0; k < k2; ++k) {
             if (tArray[k].id == A.id) continue;
-            traindb.Find(tArray[k].id, pla);
+            traindb.Find(hashstr(tArray[k].id), pla);
             Train B;
             trains.read(pla, B);
             for (int j = s1 + 1; j <= t1; ++j) {
@@ -258,7 +258,7 @@ int buy_ticket (string (&m)[256]) {
     my_string id(m['i']), uid(m['u']);
     if (!isLogin(uid)) return -1;
     int pla = -1;
-    traindb.Find(id, pla);
+    traindb.Find(hashstr(m['i']), pla);
     if (pla == -1) return -1;
     Train A;
     trains.read(pla, A);
@@ -298,7 +298,7 @@ int buy_ticket (string (&m)[256]) {
         Order a("[success]", m['i'], m['u'], S, T, stoi(m[0]), date, price, num, O, o);
         for (int i = st; i < ed; ++i) p[i] -= num;
         seats.write(A.place, date, p);
-        orderdb.Insert(m['u'], a);
+        orderdb.Insert(hashstr(m['u']), a);
         cout << 1ll * price * num << '\n';
     }
     else {
@@ -306,7 +306,7 @@ int buy_ticket (string (&m)[256]) {
         Order a("[pending]", m['i'], m['u'], S, T, stoi(m[0]), date, price, num, O, o);
         waitdb.Insert(a.id, a.id);
         waits.write(a.id, a);
-        orderdb.Insert(a.userid, a);
+        orderdb.Insert(hashstr(a.userid), a);
         cout << "queue\n";
     }
     return 0;
@@ -315,7 +315,7 @@ int buy_ticket (string (&m)[256]) {
 int query_order (string (&m)[256]) {
     my_string id(m['u']);
     if (!isLogin(id)) return -1;
-    orderdb.Find(id, orderArray);
+    orderdb.Find(hashstr(m['u']), orderArray);
     cout << orderArray.size() << '\n';
     for (int i = orderArray.size() - 1; i >= 0; --i) orderArray[i].print();
     return 0;
@@ -330,7 +330,7 @@ void checkWait() {
     for (int i = 0, k = waitArray.size(); i < k; ++i) {
         int pla = 0;
         waits.read(waitArray[i], B);
-        traindb.Find(B.trainid, pla);
+        traindb.Find(hashstr(B.trainid), pla);
         trains.read(pla, A);
         DateTime O(B.O.date, A.startTime);
         DateTime o;
@@ -344,10 +344,10 @@ void checkWait() {
         for (int i = st; i < ed; ++i) p[i] -= num;
         seats.write(A.place, date, p);
         waitdb.Delete(B.id, B.id);
-        orderdb.Delete(B.userid, B);
+        orderdb.Delete(hashstr(B.userid), B);
         string str = "[success]";
         B.statue = str;
-        orderdb.Insert(B.userid, B);        
+        orderdb.Insert(hashstr(B.userid), B);        
     }
     waitArray.clear();
 }
@@ -356,15 +356,15 @@ int refund_ticket (string (&m)[256]) {
     my_string id(m['u']);
     if (!isLogin(id)) return -1;
     int n = m['n'].size()? stoi(m['n']):1;
-    orderdb.Find(id, orderArray);
+    orderdb.Find(hashstr(m['u']), orderArray);
     n = orderArray.size() - n;
     if (n < 0 || orderArray[n].statue.key[1] == 'r') return -1;
-    orderdb.Delete(id, orderArray[n]);
+    orderdb.Delete(hashstr(m['u']), orderArray[n]);
     Train A;
     if (orderArray[n].statue.key[1] == 's') {
         DateTrainSeat p;
         int pla = 0;
-        traindb.Find(orderArray[n].trainid, pla);
+        traindb.Find(hashstr(orderArray[n].trainid), pla);
         trains.read(pla, A);
         seats.read(A.place, orderArray[n].date, p);
         int st = 0, ed = 0;
@@ -382,6 +382,6 @@ int refund_ticket (string (&m)[256]) {
     }
     string str = "[refunded]";
     orderArray[n].statue = str;
-    orderdb.Insert(id, orderArray[n]);    
+    orderdb.Insert(hashstr(m['u']), orderArray[n]);    
     return 0;
 }

@@ -10,6 +10,7 @@ using std::string;
 using std::cin;
 
 char str[4005];
+//extern vector<int> rbq;
 
 //extern int cnt1, cnt2;
 
@@ -20,6 +21,6 @@ int main() {
         cut(str);
         if (!find()) break;
     }
-    //std::cerr << cnt1 << ' ' << cnt2 << '\n';
+    //std::cerr << ' ' << rbq.size() << '\n';
     return 0;
 }
