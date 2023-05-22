@@ -7,7 +7,9 @@ extern BPlusTree<my_string, TrainStation> stationdb;
 Train A;
 FileStore<Train> trains("trains.db");
 SeatFile seats("seat.db");
+vector<int> rbq;
 int SeatFile::sum;
+//int cnt1 = 0, cnt2 = 0;
 
 void cleanTrain() {
     (&traindb)->~BPlusTree<my_string, int>();
@@ -26,13 +28,13 @@ void cleanTrain() {
 
 
 int add_train (string (&m)[256]) {
-    
     int pla = -1;
     traindb.Find(m['i'], pla);
     if (pla != -1) return -1;
-    
     Train a;
-    a.id = m['i']; a.place = ++SeatFile::sum;
+    a.id = m['i']; 
+    if (rbq.size()) a.place = rbq.back(), rbq.pop_back();
+    else a.place = ++SeatFile::sum;
     a.stationNum = stoi(m['n']);
     a.seatNum = stoi(m['m']);
     a.startTime = Time(m['x']);
@@ -40,7 +42,6 @@ int add_train (string (&m)[256]) {
     a.released = 0;
     int tot = 0;
     string str;
-
     for (int i = 0, k = m['s'].size(); i < k; ++i) {
         if (m['s'][i] == '|') a.stations[tot] = str, ++tot, str.clear();
         else str += m['s'][i];
@@ -83,6 +84,7 @@ int add_train (string (&m)[256]) {
     for (int i = Date("06-01"), k = Date("08-31"); i <= k; ++i) P[i] = p;
 
     seats.write(a.place, P);
+    //++cnt1;
     return 0;
 }
 
@@ -93,6 +95,8 @@ int delete_train (string (&m)[256]) {
     trains.read(pla, A);
     if (A.released) return -1;
     traindb.Delete(A.id, A.place);
+    rbq.push_back(A.place);
+    //++cnt2;
     return 0;
 }
 int release_train (string (&m)[256]) {

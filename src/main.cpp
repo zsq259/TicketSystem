@@ -11,19 +11,15 @@ using std::cin;
 
 char str[4005];
 
+//extern int cnt1, cnt2;
+
 int main() {
     init();
     while(1) {
-        //str.clear();
-        //std::cerr << "ok\n";
         if (!cin.getline(str, 4000)) break;
-        //puts("ok1");
-        //std::cout << str << '\n';
         cut(str);
-        
         if (!find()) break;
-        
-        //std::cerr << "ok1\n";
     }
+    //std::cerr << cnt1 << ' ' << cnt2 << '\n';
     return 0;
 }
