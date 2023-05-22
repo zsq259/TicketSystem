@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10.2)
 project(TicketSystem)
 set(CMAKE_CXX_STANDARD 20)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}   -Ofast")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast")
 
 add_executable(code ${src_dir} src/main.cpp src/parser.cpp src/user.cpp src/train.cpp src/ticket.cpp)
 #add_executable(code ${src_dir} b+tree/main.cpp)
