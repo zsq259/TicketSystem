@@ -1,19 +1,16 @@
 #include "user.h"
+#include "terminal.h"
 
-BPlusTree<my_string, User> userdb("user.db", "user_bin.db");
-sjtu::map<my_string, bool> user_login;
-vector<User> array;
-
-void cleanUser() {
+void Terminal::cleanUser() {
     (&userdb)->~BPlusTree<my_string, User>();
     std::filesystem::remove("user.db");
     std::filesystem::remove("user_bin.db");
     new (&userdb) BPlusTree<my_string, User>("user.db", "user_bin.db");
 }
 
-bool isLogin(const my_string &id) { return user_login.find(id) != user_login.end() && user_login[id]; }
+bool Terminal::isLogin(const my_string &id) { return user_login.find(id) != user_login.end() && user_login[id]; }
 
-int add_user (string (&m)[256]) {
+int Terminal::add_user (string (&m)[256]) {
     if (userdb.empty()) {
         userdb.Insert(m['u'], User(m['u'], m['p'], m['n'], m['m'], "10"));
         return 0;
@@ -27,7 +24,7 @@ int add_user (string (&m)[256]) {
     userdb.Insert(m['u'], User(m['u'], m['p'], m['n'], m['m'], m['g']));
     return 0;
 }
-int login (string (&m)[256]) {
+int Terminal::login (string (&m)[256]) {
     my_string id(m['u']);
     userdb.Find(id, array);
     if (array.empty()) { return -1; }
@@ -36,13 +33,13 @@ int login (string (&m)[256]) {
     user_login[id] = true;
     return 0;
 }
-int logout (string (&m)[256]) {
+int Terminal::logout (string (&m)[256]) {
     my_string id(m['u']);
     if (!isLogin(id) || !user_login[id]) { return -1; }
     user_login[id] = false;
     return 0;
 }
-int query_profile (string (&m)[256]) {
+int Terminal::query_profile (string (&m)[256]) {
     my_string curid(m['c']), id(m['u']);
     if (!isLogin(curid) || !user_login[curid]) { return -1; }
     userdb.Find(id, array);
@@ -54,7 +51,7 @@ int query_profile (string (&m)[256]) {
     now.print();
     return 0;
 }
-int modify_profile (string (&m)[256]) {
+int Terminal::modify_profile (string (&m)[256]) {
     my_string curid(m['c']), id(m['u']);
     if (!isLogin(curid) || !user_login[curid]) { return -1; }
     userdb.Find(id, array);

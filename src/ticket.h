@@ -32,12 +32,8 @@ class Order{
     bool operator != (const Order &other) const { return id != other.id; }
 }; 
 
-void cleanTicket();
 
-int query_ticket (string (&m)[256]);
-int query_transfer (string (&m)[256]);
-int buy_ticket (string (&m)[256]);
-int query_order (string (&m)[256]);
-int refund_ticket (string (&m)[256]);
+
+
 
 #endif

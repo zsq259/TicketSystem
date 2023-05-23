@@ -235,6 +235,7 @@ class SeatFile {
     private:
     fstream io;
     public:
+    friend class Terminal;
     static int sum;
     explicit SeatFile(const char FileName_[]) {
         io.open(FileName_, fstream::in);
@@ -278,11 +279,5 @@ class SeatFile {
     }
 };
 
-void cleanTrain();
-
-int add_train (string (&m)[256]);
-int delete_train (string (&m)[256]);
-int release_train (string (&m)[256]);
-int query_train (string (&m)[256]);
 
 #endif

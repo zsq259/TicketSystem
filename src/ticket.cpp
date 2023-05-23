@@ -1,68 +1,9 @@
 #include "ticket.h"
 #include "train.h"
 #include "user.h"
+#include "terminal.h"
 
-BPlusTree<size_t, TrainStation> stationdb("station.db", "station_bin.db");
-BPlusTree<size_t, Order> orderdb("order.db", "order_bin.db");
-BPlusTree<int, int> waitdb("wait.db", "wait_bin.db");
-extern BPlusTree<size_t, int> traindb;
-vector<TrainStation> sArray, tArray;
-vector<pair<int, int> > v;
-vector<Order> orderArray;
-vector<int> waitArray;
-FileStore<Order> waits("waits.db");
-extern SeatFile seats;
-extern FileStore<Train> trains;
-extern std::hash<std::string> hashstr;
-
-void cleanTicket() {
-    (&stationdb)->~BPlusTree<size_t, TrainStation>();
-    std::filesystem::remove("station.db");
-    std::filesystem::remove("station_bin.db");
-    new (&stationdb) BPlusTree<size_t, Train>("station.db", "station_bin.db");
-
-    (&orderdb)->~BPlusTree<size_t, Order>();
-    std::filesystem::remove("order.db");
-    std::filesystem::remove("order_bin.db");
-    new (&orderdb) BPlusTree<size_t, Order>("order.db", "order_bin.db");
-
-    (&waitdb)->~BPlusTree<int, int>();
-    std::filesystem::remove("wait.db");
-    std::filesystem::remove("wait_bin.db");
-    new (&waitdb) BPlusTree<int, int>("wait.db", "wait_bin.db");
-
-    (&waits)->~FileStore<Order>();
-    std::filesystem::remove("waits.db");
-    new (&trains) FileStore<Order>("waits.db");
-}
-
-bool findPlace(int &st, int &ed, const Train &a, const my_string &S, const my_string &T) {
-    int cnt = 0;
-    for (int j = 0; j < a.stationNum; ++j) {
-        if (a.stations[j] == S) st = j, ++cnt;
-        if (a.stations[j] == T) ed = j, ++cnt;
-    }
-    return cnt == 2 && st < ed;
-}
-
-bool compare(vector<pair<int, int>> &a, int *val, int p, int ret, const my_string &tmp) {
-    return val[p] > ret || (val[p] == ret && sArray[a[p].first].id > tmp);
-}
-
-void sort(vector<pair<int, int> > &a, int l, int r, int *val) {
-    if (r - l <= 1) return ;
-    int p1 = l, p2 = r - 1;
-    int ret = val[l];
-    my_string tmp = sArray[a[l].first].id;
-    while (p1 < p2) {
-        while (p2 > p1 && compare(a, val, p2, ret, tmp)) --p2;
-        std::swap(a[p1], a[p2]), std::swap(val[p1], val[p2]);
-        while (p1 < p2 && !compare(a, val, p1, ret, tmp)) ++p1;
-        std::swap(a[p1], a[p2]), std::swap(val[p1], val[p2]);
-    }
-    sort(a, l, p1, val);
-    sort(a, p1 + 1, r, val);
-}
+extern Terminal t;
 
 class Travel {
     TrainBase *a;
@@ -87,13 +28,62 @@ class Travel {
         cout << ' ' << price << ' ';
         int seatSum = 114514;
         DateTrainSeat p;
-        seats.read(a->place, date, p);
+        t.seats.read(a->place, date, p);
         for (int j = st; j < ed; ++j) seatSum = std::min(seatSum, p[j]);
         cout << seatSum << '\n';
     }
 };
 
-int query_ticket (string (&m)[256]) {
+void Terminal::cleanTicket() {
+    (&stationdb)->~BPlusTree<size_t, TrainStation>();
+    std::filesystem::remove("station.db");
+    std::filesystem::remove("station_bin.db");
+    new (&stationdb) BPlusTree<size_t, Train>("station.db", "station_bin.db");
+
+    (&orderdb)->~BPlusTree<size_t, Order>();
+    std::filesystem::remove("order.db");
+    std::filesystem::remove("order_bin.db");
+    new (&orderdb) BPlusTree<size_t, Order>("order.db", "order_bin.db");
+
+    (&waitdb)->~BPlusTree<int, int>();
+    std::filesystem::remove("wait.db");
+    std::filesystem::remove("wait_bin.db");
+    new (&waitdb) BPlusTree<int, int>("wait.db", "wait_bin.db");
+
+    (&waits)->~FileStore<Order>();
+    std::filesystem::remove("waits.db");
+    new (&trains) FileStore<Order>("waits.db");
+}
+
+bool Terminal::findPlace(int &st, int &ed, const Train &a, const my_string &S, const my_string &T) {
+    int cnt = 0;
+    for (int j = 0; j < a.stationNum; ++j) {
+        if (a.stations[j] == S) st = j, ++cnt;
+        if (a.stations[j] == T) ed = j, ++cnt;
+    }
+    return cnt == 2 && st < ed;
+}
+
+bool Terminal::compare(vector<pair<int, int>> &a, int *val, int p, int ret, const my_string &tmp) {
+    return val[p] > ret || (val[p] == ret && sArray[a[p].first].id > tmp);
+}
+
+void Terminal::sort(vector<pair<int, int> > &a, int l, int r, int *val) {
+    if (r - l <= 1) return ;
+    int p1 = l, p2 = r - 1;
+    int ret = val[l];
+    my_string tmp = sArray[a[l].first].id;
+    while (p1 < p2) {
+        while (p2 > p1 && compare(a, val, p2, ret, tmp)) --p2;
+        std::swap(a[p1], a[p2]), std::swap(val[p1], val[p2]);
+        while (p1 < p2 && !compare(a, val, p1, ret, tmp)) ++p1;
+        std::swap(a[p1], a[p2]), std::swap(val[p1], val[p2]);
+    }
+    sort(a, l, p1, val);
+    sort(a, p1 + 1, r, val);
+}
+
+int Terminal::query_ticket (string (&m)[256]) {
     int op = (!m['p'].size() || m['p'] == "time");
     my_string S(m['s']), T(m['t']);
     stationdb.Find(hashstr(m['s']), sArray);
@@ -140,7 +130,7 @@ int query_ticket (string (&m)[256]) {
     return 0;
 }
 
-bool cmp(int op, int p1, int p2, int bp, int bt, int i, int j, int pri, int ti) {
+bool Terminal::cmp(int op, int p1, int p2, int bp, int bt, int i, int j, int pri, int ti) {
     if (op) {
         if (bt ^ ti) return ti < bt;
         if (bp ^ pri) return pri < bp;
@@ -153,7 +143,7 @@ bool cmp(int op, int p1, int p2, int bp, int bt, int i, int j, int pri, int ti) 
     return tArray[j].id < tArray[p2].id;
 }
 
-int query_transfer (string (&m)[256]) {    
+int Terminal::query_transfer (string (&m)[256]) {    
     int op = (!m['p'].size() || m['p'] == "time");
     my_string S(m['s']), T(m['t']);
     stationdb.Find(hashstr(m['s']), sArray);
@@ -230,7 +220,7 @@ int query_transfer (string (&m)[256]) {
     return 0;
 }
 
-void getTravel(const Train &a, DateTime &O, DateTime &o, 
+void Terminal::getTravel(const Train &a, DateTime &O, DateTime &o, 
               int &price, int &seat, int &date, int &num, int &st, int &ed, 
               const my_string &S, const my_string &T, DateTrainSeat &p) {
     for (int j = 0; j < st; ++j) O += a.stopoverTimes[j] + a.travelTimes[j];
@@ -247,7 +237,7 @@ void getTravel(const Train &a, DateTime &O, DateTime &o,
     }
 }
 
-int buy_ticket (string (&m)[256]) {
+int Terminal::buy_ticket (string (&m)[256]) {
     my_string id(m['i']), uid(m['u']);
     if (!isLogin(uid)) return -1;
     int pla = -1;
@@ -297,7 +287,7 @@ int buy_ticket (string (&m)[256]) {
     return 0;
 }
 
-int query_order (string (&m)[256]) {
+int Terminal::query_order (string (&m)[256]) {
     my_string id(m['u']);
     if (!isLogin(id)) return -1;
     orderdb.Find(hashstr(m['u']), orderArray);
@@ -306,7 +296,7 @@ int query_order (string (&m)[256]) {
     return 0;
 }
 
-void checkWait() {
+void Terminal::checkWait() {
     waitdb.FindAll(waitArray);
     DateTrainSeat p;
     Train A;
@@ -337,7 +327,7 @@ void checkWait() {
     waitArray.clear();
 }
 
-int refund_ticket (string (&m)[256]) { 
+int Terminal::refund_ticket (string (&m)[256]) { 
     my_string id(m['u']);
     if (!isLogin(id)) return -1;
     int n = m['n'].size()? stoi(m['n']):1;

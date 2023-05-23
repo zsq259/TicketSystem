@@ -6,21 +6,12 @@
 #include "user.h"
 #include "train.h"
 #include "ticket.h"
+#include "terminal.h"
 using std::string;
-using std::cin;
 
-char str[4005];
-//extern vector<int> rbq;
-
-//extern int cnt1, cnt2;
+Terminal t;
 
 int main() {
-    init();
-    while(1) {
-        if (!cin.getline(str, 4000)) break;
-        cut(str);
-        if (!find()) break;
-    }
-    //std::cerr << ' ' << rbq.size() << '\n';
+    t.work();
     return 0;
 }

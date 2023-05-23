@@ -9,8 +9,4 @@
 #include "ticket.h"
 using std::string;
 
-void init();
-void cut(const char (&str)[4005]);
-bool find();
-
 #endif

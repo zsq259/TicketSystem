@@ -1,17 +1,11 @@
 #include "train.h"
 #include "ticket.h"
+#include "terminal.h"
 #include <filesystem>
 
-BPlusTree<size_t, int> traindb("train.db", "train_bin.db");
-extern BPlusTree<size_t, TrainStation> stationdb;
-Train A;
-FileStore<Train> trains("trains.db");
-SeatFile seats("seat.db");
-vector<int> rbq;
-std::hash<std::string> hashstr;
 int SeatFile::sum;
 
-void cleanTrain() {
+void Terminal::cleanTrain() {
     (&traindb)->~BPlusTree<size_t, int>();
     std::filesystem::remove("train.db");
     std::filesystem::remove("train_bin.db");
@@ -24,7 +18,7 @@ void cleanTrain() {
     new (&trains) FileStore<Train>("trains.db");
 }
 
-int add_train (string (&m)[256]) {
+int Terminal::add_train (string (&m)[256]) {
     int pla = -1;
     traindb.Find(hashstr(m['i']), pla);
     if (pla != -1) return -1;
@@ -77,7 +71,7 @@ int add_train (string (&m)[256]) {
     return 0;
 }
 
-int delete_train (string (&m)[256]) { 
+int Terminal::delete_train (string (&m)[256]) { 
     int pla = -1;
     traindb.Find(hashstr(m['i']), pla);
     if (pla == -1) return -1;
@@ -88,7 +82,7 @@ int delete_train (string (&m)[256]) {
     return 0;
 }
 
-int release_train (string (&m)[256]) {
+int Terminal::release_train (string (&m)[256]) {
     my_string id(m['i']);
     int pla = -1;
     traindb.Find(hashstr(m['i']), pla);
@@ -112,7 +106,7 @@ int release_train (string (&m)[256]) {
     return 0;
 }
 
-int query_train (string (&m)[256]) {
+int Terminal::query_train (string (&m)[256]) {
     int pla = -1;
     traindb.Find(hashstr(m['i']), pla);
     if (pla == -1) return -1;
